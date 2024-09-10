@@ -443,6 +443,7 @@
 
 import 'dart:async';
 import 'dart:developer';
+import 'package:blocks_guide/helpers/kiosk_mode_manager.dart';
 import 'package:connect_to_sql_server_directly/connect_to_sql_server_directly.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -470,7 +471,8 @@ class ProductModel {
 }
 
 class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
-  final MethodChannel platform = const MethodChannel('your_channel_name');
+  final MethodChannel platform =
+      const MethodChannel('com.example.blocks_guide/kiosk_mode');
   //
   List<ProductModel> productList = [];
   bool isLoading = false;
@@ -540,8 +542,7 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
           SystemChannels.textInput.invokeMethod('TextInput.hide');
         }
       });
-      // // Block keyboard from showing up
-      // SystemChannels.textInput.invokeMethod('TextInput.hide');
+      // KioskModeManager.startKioskMode();
     });
   }
 
@@ -736,20 +737,28 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
         centerTitle: true,
         backgroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.black),
+
+        // Add settings icon
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              KioskModeManager.showPasswordDialog(
+                  context); // Show password dialog to unlock Kiosk Mode
+            },
+          ),
+        ],
       ),
       body: Stack(
         children: [
           // Gradient background animation
-          Padding(
-            padding: const EdgeInsets.only(bottom: 11.0).r,
-            child: AnimatedContainer(
-              duration: const Duration(seconds: 1),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [bottomColor, topColor],
-                ),
+          AnimatedContainer(
+            duration: const Duration(seconds: 1),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [bottomColor, topColor],
               ),
             ),
           ),
