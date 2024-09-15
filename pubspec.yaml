@@ -38,6 +38,9 @@ dependencies:
   connect_to_sql_server_directly: ^0.0.1
   kiosk_mode: ^0.5.0+5
   flutter_screenutil: ^5.9.3
+  connectivity_plus: ^2.3.0
+  shared_preferences: ^2.2.3
+  provider: ^6.1.2
 
 dev_dependencies:
   flutter_test:

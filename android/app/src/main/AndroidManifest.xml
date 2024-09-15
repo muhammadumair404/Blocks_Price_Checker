@@ -1,9 +1,14 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" 
+    package="com.example.blocks_guide">
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.BIND_DEVICE_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
 
     <application
-        android:label="blocks_guide"
+        android:label="Blocks Guide"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
@@ -58,7 +63,7 @@
 
         <!-- Flutter embedding configuration -->
         <meta-data
-            android:name="flutterEmbedding"
-            android:value="2" />
+    android:name="flutterEmbedding"
+    android:value="2" />
     </application>
 </manifest>

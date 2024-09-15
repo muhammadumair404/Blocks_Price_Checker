@@ -1,8 +1,18 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:async';
+import 'package:connect_to_sql_server_directly/connect_to_sql_server_directly.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'connection_provider.dart';
 
 class KioskModeManager {
   static const platform = MethodChannel('com.example.blocks_guide/kiosk_mode');
+  static Timer? _popupTimer;
+  static bool testSuccess = false; // Flag for successful test connection
 
   // Call this to start Kiosk Mode
   static Future<void> startKioskMode() async {
@@ -26,43 +36,351 @@ class KioskModeManager {
   static Future<void> showPasswordDialog(BuildContext context) async {
     TextEditingController passwordController = TextEditingController();
 
-    showDialog(
+    // Automatically close after 10 seconds of inactivity
+    startPopupTimeout(context, duration: const Duration(seconds: 10));
+
+    showGeneralDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Enter Password'),
-          content: TextField(
-            controller: passwordController,
-            obscureText: true,
-            decoration: const InputDecoration(hintText: 'Enter password'),
+      barrierDismissible:
+          false, // Prevent dismissal by tapping outside the dialog
+      barrierColor: Colors.black.withOpacity(0.5), // Background color
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) {
+        return const SizedBox.shrink();
+      },
+      transitionBuilder: (context, anim1, anim2, child) {
+        return FadeTransition(
+          opacity: anim1,
+          child: AlertDialog(
+            title: const Text('Enter Password'),
+            content: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.3, // Adjust width
+              child: TextField(
+                autofocus: true,
+                controller: passwordController,
+                obscureText: true, // Hide password
+                decoration: const InputDecoration(
+                  hintText: 'Enter password',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                ),
+                onChanged: (value) {
+                  resetPopupTimeout(context,
+                      duration:
+                          const Duration(seconds: 10)); // Reset timer on typing
+                },
+                onSubmitted: (value) async {
+                  if (passwordController.text == '1234') {
+                    Navigator.of(context).pop(); // Close the password dialog
+                    _showDatabasePopup(context); // Show the new popup
+                  } else {
+                    passwordController.clear(); // Clear the password field
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Incorrect Password')),
+                    );
+                  }
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+              ),
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () async {
+                  if (passwordController.text == '1234') {
+                    Navigator.of(context).pop(); // Close the password dialog
+                    _showDatabasePopup(context); // Show the new popup
+                  } else {
+                    passwordController.clear(); // Clear the password field
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Incorrect Password')),
+                    );
+                  }
+                },
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () async {
-                if (passwordController.text == '1234') {
-                  // Replace with actual password logic
-                  await stopKioskMode(); // Stop Kiosk Mode
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Kiosk Mode Disabled')),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Incorrect Password')),
-                  );
-                }
-              },
-            ),
-          ],
         );
       },
     );
+  }
+
+  static Future<void> _showDatabasePopup(BuildContext context) async {
+    final connectToSqlServerDirectlyPlugin = ConnectToSqlServerDirectly();
+    bool connect = false;
+
+    TextEditingController serverController =
+        TextEditingController(text: '192.168.100.26');
+    TextEditingController databaseController =
+        TextEditingController(text: 'TestDB');
+    TextEditingController usernameController =
+        TextEditingController(text: 'SuperAdmin');
+    TextEditingController passwordController =
+        TextEditingController(text: 'Ali@00786');
+
+    final connectionProvider = context.read<ConnectionProvider>();
+
+    // Function to test connection
+    Future<void> testConnection(BuildContext context, Function setState) async {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      try {
+        connect = await connectToSqlServerDirectlyPlugin.initializeConnection(
+          serverController.text,
+          databaseController.text,
+          usernameController.text,
+          passwordController.text,
+          instance: '',
+        );
+      } catch (e) {
+        connect = false;
+        print('Failed to connect to the database: $e');
+        return;
+      }
+
+      final response = await connectToSqlServerDirectlyPlugin
+          .getRowsOfQueryResult("SELECT TOP 1 * FROM Product;");
+      if (response.toString().contains('java')) {
+        connect = false;
+      } else {
+        connect = true;
+      }
+
+      // Handle connection result
+      if (connect) {
+        prefs.setBool('connection', true);
+        connectionProvider.updateConnectionStatus(true);
+        setState(() {}); // Update the state to enable the Update button
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Successfully connected to the server'),
+              backgroundColor: Colors.green),
+        );
+      } else {
+        // Clear preferences on failed connection
+        await prefs.clear();
+        connectionProvider.updateConnectionStatus(false);
+        setState(() {}); // Update the state to keep the Update button disabled
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Failed to connect to the server'),
+              backgroundColor: Colors.red),
+        );
+      }
+    }
+
+    // Function to show warning when canceling after a successful connection
+    Future<bool> showCancelWarning(BuildContext context) async {
+      return await showDialog<bool>(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Warning'),
+                content: const Text(
+                    'You have successfully connected to the server. If you cancel, the connection will be lost. Do you want to proceed?'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context)
+                          .pop(false); // Return false if user cancels
+                    },
+                    child: const Text('No'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context)
+                          .pop(true); // Return true if user confirms
+                    },
+                    child: const Text('Yes'),
+                  ),
+                ],
+              );
+            },
+          ) ??
+          false;
+    }
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) {
+        return const SizedBox.shrink();
+      },
+      transitionBuilder: (context, anim1, anim2, child) {
+        return FadeTransition(
+          opacity: anim1,
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: const Text('Database Server'),
+                content: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.6,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              await stopKioskMode();
+                              Navigator.of(context).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Kiosk Mode Disabled.')),
+                              );
+                            },
+                            child: const Text('Exit to OS'),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildTextField(context,
+                            autofocus: true,
+                            controller: serverController,
+                            labelText: 'Server'),
+                        const SizedBox(height: 10),
+                        _buildTextField(context,
+                            controller: databaseController,
+                            labelText: 'Database'),
+                        const SizedBox(height: 10),
+                        _buildTextField(context,
+                            controller: usernameController,
+                            labelText: 'Username'),
+                        const SizedBox(height: 10),
+                        _buildTextField(context,
+                            controller: passwordController,
+                            labelText: 'Password',
+                            obscureText: true),
+                      ],
+                    ),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    child: const Text('Test Connection'),
+                    onPressed: () {
+                      testConnection(context, setState);
+                    },
+                  ),
+                  TextButton(
+                    child: const Text('Cancel'),
+                    onPressed: () async {
+                      if (connect) {
+                        // Show warning if connected successfully
+                        bool proceed = await showCancelWarning(context);
+                        if (proceed) {
+                          Navigator.of(context).pop(); // Close the dialog
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs
+                              .clear(); // Clear the preferences on cancel
+                          connectionProvider.updateConnectionStatus(
+                              false); // Update the connection status to false
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Connection lost'),
+                                backgroundColor: Colors.red),
+                          );
+                        }
+                      } else {
+                        Navigator.of(context)
+                            .pop(); // Close the dialog without warning
+                      }
+                    },
+                  ),
+                  ElevatedButton(
+                    onPressed: connect
+                        ? () async {
+                            // Save connection data and update settings
+                            await _handleUpdate(
+                                context,
+                                serverController,
+                                databaseController,
+                                usernameController,
+                                passwordController);
+                          }
+                        : null, // Disable if not connected
+                    child: const Text('Update'),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  static Widget _buildTextField(BuildContext context,
+      {required TextEditingController controller,
+      required String labelText,
+      bool obscureText = false,
+      bool autofocus = false}) {
+    return TextField(
+      autofocus: autofocus,
+      controller: controller,
+      obscureText: obscureText,
+      decoration: InputDecoration(
+        labelText: labelText,
+        border: const OutlineInputBorder(),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+      ),
+    );
+  }
+
+  static Future<void> _handleUpdate(
+      BuildContext context,
+      TextEditingController serverController,
+      TextEditingController databaseController,
+      TextEditingController usernameController,
+      TextEditingController passwordController) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (serverController.text.isNotEmpty &&
+        databaseController.text.isNotEmpty &&
+        usernameController.text.isNotEmpty &&
+        passwordController.text.isNotEmpty) {
+      // Store connection data
+      prefs.setString('serverIp', serverController.text);
+      prefs.setString('database', databaseController.text);
+      prefs.setString('userName', usernameController.text);
+      prefs.setString('password', passwordController.text);
+      Navigator.of(context).pop(); // Close the dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Settings Updated')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('All fields are required')),
+      );
+    }
+  }
+
+  // Timer to automatically close popups after a specified duration
+  static void startPopupTimeout(BuildContext context,
+      {required Duration duration}) {
+    _popupTimer?.cancel(); // Cancel any existing timer
+    _popupTimer = Timer(duration, () {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(); // Automatically close the popup
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Popup closed due to inactivity')),
+        );
+      }
+    });
+  }
+
+  // Reset the popup timeout
+  static void resetPopupTimeout(BuildContext context,
+      {required Duration duration}) {
+    _popupTimer?.cancel(); // Cancel the current timer
+    startPopupTimeout(context,
+        duration: duration); // Restart the timer with the same duration
   }
 }

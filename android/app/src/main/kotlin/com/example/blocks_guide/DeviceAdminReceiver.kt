@@ -3,29 +3,27 @@ package com.example.blocks_guide
 import android.app.admin.DeviceAdminReceiver
 import android.content.Context
 import android.content.Intent
-import android.app.NotificationManager
-import android.app.Notification
-import android.app.admin.DevicePolicyManager
-import android.content.ComponentName
+import android.widget.Toast
 
 class MyDeviceAdminReceiver : DeviceAdminReceiver() {
 
     override fun onEnabled(context: Context, intent: Intent) {
         super.onEnabled(context, intent)
-        // Device admin enabled logic
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notification = Notification.Builder(context)
-            .setContentTitle("Device Admin Enabled")
-            .setContentText("This app is now a device admin")
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .build()
-        notificationManager.notify(1, notification)
+        Toast.makeText(context, "Device Admin Enabled", Toast.LENGTH_SHORT).show()
     }
 
     override fun onDisabled(context: Context, intent: Intent) {
         super.onDisabled(context, intent)
-        // Device admin disabled logic
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancel(1) // Cancel the notification when admin is disabled
+        Toast.makeText(context, "Device Admin Disabled", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onLockTaskModeEntering(context: Context, intent: Intent, pkg: String) {
+        super.onLockTaskModeEntering(context, intent, pkg)
+        Toast.makeText(context, "Kiosk Mode Started", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onLockTaskModeExiting(context: Context, intent: Intent) {
+        super.onLockTaskModeExiting(context, intent)
+        Toast.makeText(context, "Kiosk Mode Stopped", Toast.LENGTH_SHORT).show()
     }
 }
