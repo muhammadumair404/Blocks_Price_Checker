@@ -1,6 +1,5 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
@@ -13,6 +12,29 @@ class KioskModeManager {
   static const platform = MethodChannel('com.example.blocks_guide/kiosk_mode');
   static Timer? _popupTimer;
   static bool testSuccess = false; // Flag for successful test connection
+
+  // static const MethodChannel platform =
+  //     MethodChannel('com.example.blocks_guide/kiosk_mode');
+
+  // // Function to start Kiosk Mode
+  // static Future<void> startKioskMode() async {
+  //   try {
+  //     var result = await platform.invokeMethod('startKioskMode');
+  //     log("Kiosk Mode started: $result");
+  //   } on PlatformException catch (e) {
+  //     log("Failed to start Kiosk Mode: '${e.message}'.");
+  //   }
+  // }
+
+  // // Function to stop Kiosk Mode
+  // static Future<void> stopKioskMode() async {
+  //   try {
+  //     var result = await platform.invokeMethod('stopKioskMode');
+  //     log("Kiosk Mode stopped: $result");
+  //   } on PlatformException catch (e) {
+  //     log("Failed to stop Kiosk Mode: '${e.message}'.");
+  //   }
+  // }
 
   // Call this to start Kiosk Mode
   static Future<void> startKioskMode() async {
@@ -35,6 +57,7 @@ class KioskModeManager {
   // Show password dialog and handle Kiosk Mode exit
   static Future<void> showPasswordDialog(BuildContext context) async {
     TextEditingController passwordController = TextEditingController();
+    FocusNode passwordFocusNode = FocusNode();
 
     // Automatically close after 10 seconds of inactivity
     startPopupTimeout(context, duration: const Duration(seconds: 10));
@@ -56,6 +79,7 @@ class KioskModeManager {
             content: SizedBox(
               width: MediaQuery.of(context).size.width * 0.3, // Adjust width
               child: TextField(
+                focusNode: passwordFocusNode,
                 autofocus: true,
                 controller: passwordController,
                 obscureText: true, // Hide password
@@ -76,6 +100,7 @@ class KioskModeManager {
                     _showDatabasePopup(context); // Show the new popup
                   } else {
                     passwordController.clear(); // Clear the password field
+                    passwordFocusNode.requestFocus(); // Request focus again
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Incorrect Password')),
                     );
@@ -98,6 +123,7 @@ class KioskModeManager {
                     _showDatabasePopup(context); // Show the new popup
                   } else {
                     passwordController.clear(); // Clear the password field
+                    passwordFocusNode.requestFocus(); // Request focus again
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Incorrect Password')),
                     );
@@ -109,6 +135,9 @@ class KioskModeManager {
         );
       },
     );
+
+    // Make sure the text field is focused initially
+    passwordFocusNode.requestFocus();
   }
 
   static Future<void> _showDatabasePopup(BuildContext context) async {
@@ -362,12 +391,14 @@ class KioskModeManager {
     }
   }
 
-  // Timer to automatically close popups after a specified duration
+// Timer to automatically close popups after a specified duration
   static void startPopupTimeout(BuildContext context,
       {required Duration duration}) {
     _popupTimer?.cancel(); // Cancel any existing timer
+
     _popupTimer = Timer(duration, () {
-      if (Navigator.of(context).canPop()) {
+      // Check if context is still mounted to avoid calling Navigator on disposed context
+      if (context.mounted && Navigator.of(context).canPop()) {
         Navigator.of(context).pop(); // Automatically close the popup
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Popup closed due to inactivity')),

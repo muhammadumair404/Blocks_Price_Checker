@@ -778,6 +778,8 @@
 //   }
 // }
 
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:async';
 import 'dart:developer';
 import 'package:blocks_guide/helpers/connection_provider.dart';
@@ -789,6 +791,7 @@ import 'package:flutter/services.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -801,21 +804,22 @@ class ProductModel {
   final String keycode;
   final String sku;
   final String name;
-  double retailPrice; // For regular price
-  double?
-      specialPrice; // Nullable special price (can be null if no special price is available)
+  double retailPrice;
+  double? specialPrice; // Nullable special price
+  String? mixAndMatch;
 
   ProductModel({
     required this.keycode,
     required this.sku,
     required this.name,
     required this.retailPrice,
-    this.specialPrice, // Optional field
+    this.specialPrice,
+    this.mixAndMatch,
   });
 
   @override
   String toString() =>
-      'ProductModel{keycode: $keycode, sku: $sku, name: $name, retailPrice: $retailPrice, specialPrice: $specialPrice}';
+      'ProductModel{keycode: $keycode, sku: $sku, name: $name, retailPrice: $retailPrice, specialPrice: $specialPrice, mixAndMatch: $mixAndMatch}';
 }
 
 class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
@@ -842,17 +846,138 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   late Timer _timer;
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
   late AnimationController _colorController;
   late Animation<Color?> _colorAnimation;
   Timer? _clearProductTimer; // Timer for clearing the product
-
   Future<void> _launchAppOnBoot() async {
+    await KioskModeManager.startKioskMode();
     try {
       var result = await platform.invokeMethod('startKioskMode');
       log(result.toString());
     } on PlatformException catch (e) {
       print("Failed to invoke method: '${e.message}'.");
     }
+  }
+
+  bool isWithinDateRange(
+      DateTime startDate, DateTime endDate, DateTime currentDate) {
+    return startDate.isBefore(currentDate) && endDate.isAfter(currentDate);
+  }
+
+  bool isWithinTimeRange(
+      String startTime, String endTime, DateTime currentTime) {
+    final format = DateFormat.Hms();
+    final start = format.parse(startTime);
+    final end = format.parse(endTime);
+    return currentTime.isAfter(start) && currentTime.isBefore(end);
+  }
+
+  Future<String> getMixAndMatchData(String productId) async {
+    String mixMatchText = '';
+    final today = DateTime.now();
+
+    // Get the current weekday as a name (Monday, Tuesday, etc.)
+    List<String> weekdays = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday'
+    ];
+    String currentDayName = weekdays[today.weekday %
+        7]; // Weekday starts from 1 (Monday), so adjust for Sunday.
+    String weekdayCheck = "${currentDayName}_Check"; // e.g., "[Monday_Check]"
+
+    log('Crurrent Day :>>> $weekdayCheck');
+    var data = [];
+
+    try {
+      // Query to get mix and match details for the product
+      final response = await _connectToSqlServerDirectlyPlugin
+          .getRowsOfQueryResult("""SELECT 
+    MAM.* 
+FROM 
+    Mix_And_Match MAM
+JOIN 
+    Mix_And_Match_Products MAMP
+    ON MAM.Id = MAMP.Mix_And_Match_Id
+WHERE 
+    MAMP.Product_Id = '$productId'
+    AND MAM.Is_Active = '1'
+    AND (
+        (MAM.Is_Limited_Date = '1' AND GETDATE() BETWEEN MAM.Limited_Start_Date AND MAM.Limited_End_Date)
+        OR MAM.Is_Limited_Date = '0'
+    )
+    AND (
+        (MAM.Is_Time_Restricted = '1' AND GETDATE() BETWEEN MAM.Restricted_Time_Start_Date AND MAM.Restricted_Time_End_Date)
+        OR MAM.Is_Time_Restricted = '0'
+    ); """);
+
+      //       ("""
+      //   SELECT Mix_And_Match.Id, Mix_And_Match.Discount, Mix_And_Match.Type, Mix_And_Match.Quantity, Mix_And_Match.Is_Limited_Date,
+      //          Mix_And_Match.Limited_Start_Date, Mix_And_Match.Limited_End_Date, Mix_And_Match.Is_Time_Restricted,
+      //          Mix_And_Match.Restricted_Time_Start_Date, Mix_And_Match.Restricted_Time_End_Date, $weekdayCheck
+      //   FROM Mix_And_Match, Mix_And_Match_Products
+      //   WHERE Mix_And_Match.Id = Mix_And_Match_Products.Mix_And_Match_Id
+      //   AND Mix_And_Match_Products.Product_Id = '$productId'
+      //   AND Mix_And_Match.Is_Active = '1';
+      // """);
+      log('getMixAndMatchData response >>> $response');
+      if (response != null && response is List && response.isNotEmpty) {
+        for (var row in response) {
+          // DateTime startDate = DateTime.parse(row['Limited_Start_Date']);
+          // DateTime endDate = DateTime.parse(row['Limited_End_Date']);
+
+          // if (row['Is_Limited_Date']) {
+          //   if (!isWithinDateRange(startDate, endDate, today)) {
+          //     return '';
+          //   }
+          //   if (!row[weekdayCheck]) return '';
+          // }
+
+          // // Check time restriction
+          // if (row['Is_Time_Restricted']) {
+          //   if (!isWithinTimeRange(row['Restricted_Time_Start_Date'],
+          //       row['Restricted_Time_End_Date'], today)) {
+          //     return '';
+          //   }
+          // }
+
+          // Check if the mix-and-match is valid for today's weekday
+          bool isDayValid = row[weekdayCheck] == true || row[weekdayCheck] == 1;
+
+          // Log the weekday check result
+          log('Weekday check for $currentDayName: $isDayValid');
+
+          // Only proceed if the product is valid for today
+          if (!isDayValid) {
+            log('Mix and Match not valid for today\'s weekday');
+            return ''; // Return empty if not valid for today
+          }
+          setState(() {
+            mixMatchText = '';
+            mixMatchText = row['Name'];
+          });
+          //
+          data.clear();
+          data.add(row);
+          log('data:   >>>  $data >>> rowName : ${row['Name']}');
+          // log('data mix and match : ${row['Name']}');
+        }
+      } else {
+        setState(() {
+          mixMatchText = '';
+        });
+      }
+    } catch (e) {
+      print('Error fetching Mix and Match data: $e');
+    }
+
+    return mixMatchText;
   }
 
   @override
@@ -890,13 +1015,21 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
       }
     });
 
-    // Initialize the color animation controller
-    _colorController = AnimationController(
-      duration: const Duration(seconds: 2),
+    // Zoom In/Out Animation
+    _scaleController = AnimationController(
+      duration: const Duration(seconds: 1),
       vsync: this,
     )..repeat(reverse: true);
 
-    // Define the color tween for continuous color change
+    _scaleAnimation =
+        Tween<double>(begin: 1.0, end: 0.5).animate(_scaleController);
+
+    // Color Transition Animation
+    _colorController = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    )..repeat(reverse: true);
+
     _colorAnimation = ColorTween(
       begin: Colors.green,
       end: Colors.red,
@@ -922,7 +1055,9 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
     _focusNode.dispose();
     controller.dispose();
     _controller.dispose();
+    _scaleController.dispose();
     _colorController.dispose(); // Dispose the controller
+    _timer.cancel();
     _clearProductTimer
         ?.cancel(); // Cancel the timer when the screen is disposed
     _timer.cancel();
@@ -940,13 +1075,37 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
       });
 
       // Show a message or simply rely on the UI update
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Product data cleared.'),
-        ),
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          // Check if the widget is still in the tree
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Product data cleared.'),
+            ),
+          );
+        }
+      });
     });
   }
+
+  // void _startClearProductTimer() {
+  //   // Cancel any existing timer before starting a new one
+  //   _clearProductTimer?.cancel();
+
+  //   _clearProductTimer = Timer(const Duration(seconds: 15), () {
+  //     setState(() {
+  //       productList.clear(); // Clear the product list
+  //       imageUrl = ''; // Clear the image URL
+  //     });
+
+  //     // Show a message or simply rely on the UI update
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text('Product data cleared.'),
+  //       ),
+  //     );
+  //   });
+  // }
 
   Future<void> getProductsTableData(String text) async {
     setState(() {
@@ -954,7 +1113,9 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
       controller.text = text;
     });
     productList.clear();
+    log('Product list >>::>> ${productList.isEmpty}');
 
+    // Check if there is internet connectivity
     var connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.none) {
       showBottomSnackBar(
@@ -969,6 +1130,7 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
     bool connect = false;
 
     try {
+      // Establish SQL Server connection using saved credentials
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       connect = await _connectToSqlServerDirectlyPlugin.initializeConnection(
         prefs.getString('serverIp')!,
@@ -1000,74 +1162,81 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
 
     try {
       final today = DateTime.now();
-      // First query: Search by plu_id or Barcode
-      final response =
+
+      // Query to get the basic product data based on barcode or plu_id
+      final productResponse =
           await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
-        "SELECT Id, Barcode, product_name, retail_price, product_type, tax, ebt_eligible_checkbox, weight_item_checkbox, loyality_point FROM Product WHERE plu_id =  '$text' OR Barcode =  '$text';",
+        "SELECT Id, Barcode, product_name, retail_price, product_type, tax, ebt_eligible_checkbox, weight_item_checkbox, loyality_point FROM Product WHERE plu_id =  '$text' OR Barcode =  '$text' ;",
       );
-      if (response.runtimeType == String) {
-        showBottomSnackBar(response.toString());
+
+      if (productResponse.runtimeType == String) {
+        showBottomSnackBar(productResponse.toString());
       } else {
         List<Map<String, dynamic>> tempResult =
-            response.cast<Map<String, dynamic>>();
+            productResponse.cast<Map<String, dynamic>>();
+
         for (var element in tempResult) {
-          _addProduct(element);
+          String mixMatch = await getMixAndMatchData(element['Id'].toString());
+          _addProduct(element, mixMatch: mixMatch);
+          log('product id ${element['Id'].toString()}');
+          // Now we fetch and apply mix and match logic
         }
       }
 
-      final specialPrice = await _connectToSqlServerDirectlyPlugin
-          .getRowsOfQueryResult("""SELECT Id, special_price 
-              FROM Product
-              WHERE (plu_id = '$text' OR Barcode = '$text')
-              AND '$today' BETWEEN CONVERT(DATE, on_special_datetime1) AND CONVERT(DATE, on_special_datetime2)
-              AND on_special = 1;
-          """);
+      // Now we fetch any special price that applies
+      final specialPriceResponse =
+          await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult("""
+        SELECT Id, special_price 
+        FROM Product
+        WHERE (plu_id = '$text' OR Barcode = '$text')
+        AND '$today' BETWEEN CONVERT(DATE, on_special_datetime1) AND CONVERT(DATE, on_special_datetime2)
+        AND on_special = 1;
+      """);
 
-      for (var product in productList) {
-        List<Map<String, dynamic>> tempResult =
-            specialPrice.cast<Map<String, dynamic>>();
-        for (var e in tempResult) {
-          if (product.keycode == e['Id'].toString()) {
-            product.specialPrice =
-                double.tryParse(e["special_price"].toString()) ?? 0.0;
+      if (specialPriceResponse is List) {
+        for (var product in productList) {
+          List<Map<String, dynamic>> tempResult =
+              specialPriceResponse.cast<Map<String, dynamic>>();
+          for (var e in tempResult) {
+            if (product.keycode == e['Id'].toString()) {
+              product.specialPrice =
+                  double.tryParse(e["special_price"].toString()) ?? 0.0;
+            }
           }
         }
       }
 
+      // If no product was found, check using SKU
       if (productList.isEmpty) {
-        final response2 =
+        final skuResponse =
             await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
           "SELECT Product.Id, product_name, retail_price, product_type, tax, ebt_eligible_checkbox, weight_item_checkbox, loyality_point FROM Product, ProductSKUs WHERE ProductSKUs.SKU = '$text' AND Product.Id = ProductSKUs.Product_Id",
         );
-        if (response2.runtimeType == String) {
-          showBottomSnackBar(response2.toString());
+        if (skuResponse.runtimeType == String) {
+          showBottomSnackBar(skuResponse.toString());
         } else {
           List<Map<String, dynamic>> tempResult =
-              response2.cast<Map<String, dynamic>>();
+              skuResponse.cast<Map<String, dynamic>>();
           for (var element in tempResult) {
             _addProduct(element);
           }
         }
       }
 
+      // Check if no product was found in both cases
       if (productList.isEmpty) {
         showBottomSnackBar('No product found');
       } else {
-        final response3 =
+        // Fetch product image if found
+        final imageResponse =
             await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
           "SELECT image_url FROM Product WHERE Barcode = '$text'",
         );
 
-        if (response3 is String) {
-          showBottomSnackBar(response3.toString());
+        if (imageResponse is List && imageResponse.isNotEmpty) {
+          imageUrl = imageResponse.first["image_url"] ?? '';
         } else {
-          List<Map<String, dynamic>> tempResult =
-              List<Map<String, dynamic>>.from(response3);
-          if (tempResult.isNotEmpty) {
-            imageUrl = tempResult.first["image_url"];
-          } else {
-            imageUrl = '';
-          }
+          imageUrl = '';
         }
       }
     } catch (error) {
@@ -1082,14 +1251,45 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
     });
   }
 
-  void _addProduct(Map<String, dynamic> element) {
-    productList.add(ProductModel(
-        keycode: element['Id'].toString(),
-        sku: element['Barcode'].toString(),
-        name: element['product_name'],
-        retailPrice: double.tryParse(element['retail_price'].toString()) ?? 0.0,
-        specialPrice:
-            double.tryParse(element['special_price'].toString()) ?? 0.0));
+  // void _addProduct(Map<String, dynamic> element) {
+  //   productList.add(
+  //     ProductModel(
+  //         keycode: element['Id'].toString(),
+  //         sku: element['Barcode'].toString(),
+  //         name: element['product_name'],
+  //         mixAndMatch: element['Name'],
+  //         retailPrice:
+  //             double.tryParse(element['retail_price'].toString()) ?? 0.0,
+  //         specialPrice:
+  //             double.tryParse(element['special_price'].toString()) ?? 0.0),
+  //   );
+  // }
+
+  void _addProduct(Map<String, dynamic> element, {String mixMatch = ''}) {
+    final keycode = element['Id']?.toString() ?? '';
+    final sku = element['Barcode']?.toString() ?? '';
+    final name = element['product_name'] ?? 'Unknown Product';
+    final retailPrice =
+        double.tryParse(element['retail_price']?.toString() ?? '0.0') ?? 0.0;
+    final specialPrice =
+        double.tryParse(element['special_price']?.toString() ?? '0.0') ?? 0.0;
+    // final mixMatch = element['Name']?.toString() ?? '';
+
+    log('Product list : ${productList.isEmpty}');
+
+    if (keycode.isNotEmpty && sku.isNotEmpty) {
+      // Ensure the essential data is present
+      productList.add(
+        ProductModel(
+          keycode: keycode,
+          sku: sku,
+          name: name,
+          retailPrice: retailPrice,
+          specialPrice: specialPrice,
+          mixAndMatch: mixMatch,
+        ),
+      );
+    }
   }
 
   void showBottomSnackBar(String message) {
@@ -1152,7 +1352,7 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 7.sp,
+            fontSize: 10.sp,
           ),
         ),
         centerTitle: true,
@@ -1167,6 +1367,7 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
               color: connection ? Colors.green : Colors.red,
             ),
             onPressed: () {
+              FocusScope.of(context).unfocus();
               KioskModeManager.showPasswordDialog(context);
             },
           ),
@@ -1187,59 +1388,58 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
           Padding(
             padding:
                 const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0).r,
-            child: SingleChildScrollView(
-              // Add SingleChildScrollView here
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width / 0.5.w,
-                    height: 60.h,
-                    child: TextFormField(
-                      style: const TextStyle(color: Colors.white),
-                      autofocus: true,
-                      controller: controller,
-                      focusNode: _focusNode,
-                      onFieldSubmitted: (s) {
-                        log('Print S >>> $s');
-                        getProductsTableData(s);
-                        _focusNode.requestFocus();
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Scan Your Product',
-                        labelStyle: TextStyle(
-                          fontSize: 5.sp,
-                          color:
-                              _focusNode.hasFocus ? Colors.white : Colors.grey,
+            child: Column(
+              children: [
+                SizedBox(
+                  width: MediaQuery.of(context).size.width / 0.5.w,
+                  height: 60.h,
+                  child: TextFormField(
+                    style: const TextStyle(color: Colors.white),
+                    autofocus: true,
+                    controller: controller,
+                    focusNode: _focusNode,
+                    onFieldSubmitted: (s) {
+                      log('Print S >>> $s');
+                      getProductsTableData(s);
+                      _focusNode.requestFocus();
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Scan Your Product',
+                      labelStyle: TextStyle(
+                        fontSize: 7.sp,
+                        color: _focusNode.hasFocus ? Colors.white : Colors.grey,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Colors.amberAccent,
+                          width: 1.0.w,
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.amberAccent,
-                            width: 1.0.w,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.grey,
-                            width: 1.0.w,
-                          ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Colors.grey,
+                          width: 1.0.w,
                         ),
                       ),
                     ),
                   ),
+                ),
 
-                  SizedBox(height: 20.h),
+                SizedBox(height: 10.h),
 
-                  // Product Display Section
-                  Container(
+                // Product Display Section
+                Expanded(
+                  flex: 8,
+                  child: Container(
                     padding: const EdgeInsets.all(10).r,
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
                       borderRadius: BorderRadius.circular(20.r),
                       boxShadow: const [
                         BoxShadow(
-                          color: Colors.black12,
+                          color: Colors.black54,
                           blurRadius: 5,
-                          spreadRadius: 5,
+                          spreadRadius: 15,
                         ),
                       ],
                     ),
@@ -1279,7 +1479,7 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
                                     ),
                                   ),
                                   Container(
-                                      height: 320.h,
+                                      height: 350.h,
                                       width: 1.w,
                                       color: Colors.grey.withOpacity(0.5)),
                                   Expanded(
@@ -1290,11 +1490,12 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: productList.map((item) {
+                                          log('item mixmatch : ${item.mixAndMatch}');
                                           return Column(
                                             children: [
                                               Container(
-                                                height: 390.h,
-                                                width: 140.w,
+                                                height: 400.h,
+                                                width: 160.w,
                                                 decoration: BoxDecoration(
                                                     color: Colors.white,
                                                     borderRadius:
@@ -1316,7 +1517,7 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
                                                             FontWeight.w700,
                                                       ),
                                                     ),
-                                                    SizedBox(height: 10.h),
+                                                    SizedBox(height: 20.h),
                                                     Padding(
                                                       padding: const EdgeInsets
                                                           .symmetric(
@@ -1330,7 +1531,7 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
                                                             child: Text(
                                                               'Retail Price: ',
                                                               style: TextStyle(
-                                                                fontSize: 9.sp,
+                                                                fontSize: 7.sp,
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .bold,
@@ -1351,6 +1552,7 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
                                                             ),
                                                           ),
                                                           Expanded(
+                                                            flex: 2,
                                                             child: FittedBox(
                                                               child: Text(
                                                                 item.retailPrice
@@ -1372,8 +1574,49 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
                                                         ],
                                                       ),
                                                     ),
+                                                    SizedBox(height: 20.h),
+                                                    if (item.mixAndMatch!
+                                                        .isNotEmpty)
+                                                      FittedBox(
+                                                        child: AnimatedBuilder(
+                                                          animation:
+                                                              _scaleAnimation,
+                                                          builder:
+                                                              (context, child) {
+                                                            return Transform
+                                                                .scale(
+                                                              scale: _scaleAnimation
+                                                                  .value, // Apply zoom animation
+                                                              child:
+                                                                  AnimatedBuilder(
+                                                                animation:
+                                                                    _colorAnimation,
+                                                                builder:
+                                                                    (context,
+                                                                        child) {
+                                                                  return Text(
+                                                                    item.mixAndMatch!,
+                                                                    style:
+                                                                        TextStyle(
+                                                                      fontSize:
+                                                                          20.sp,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                      color: _colorAnimation
+                                                                          .value, // Apply color animation
+                                                                    ),
+                                                                  );
+                                                                },
+                                                              ),
+                                                            );
+                                                          },
+                                                        ),
+                                                      ),
                                                     if (item.specialPrice !=
-                                                        0.00) ...[
+                                                            null &&
+                                                        item.specialPrice !=
+                                                            0.00) ...[
                                                       Padding(
                                                         padding:
                                                             const EdgeInsets
@@ -1402,7 +1645,7 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
                                                                 style:
                                                                     TextStyle(
                                                                   fontSize:
-                                                                      9.sp,
+                                                                      7.sp,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .bold,
@@ -1427,22 +1670,31 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
                                                                 child:
                                                                     AnimatedBuilder(
                                                                   animation:
-                                                                      _colorAnimation,
+                                                                      _scaleAnimation,
                                                                   builder:
                                                                       (context,
                                                                           child) {
-                                                                    return Text(
-                                                                      item.specialPrice!
-                                                                          .toStringAsFixed(
-                                                                              2),
-                                                                      style:
-                                                                          TextStyle(
-                                                                        fontSize:
-                                                                            20.sp,
-                                                                        fontWeight:
-                                                                            FontWeight.bold,
-                                                                        color: _colorAnimation
-                                                                            .value, // Apply the color animation
+                                                                    return Transform
+                                                                        .scale(
+                                                                      scale: _scaleAnimation
+                                                                          .value, // Apply zoom animation
+                                                                      child:
+                                                                          AnimatedBuilder(
+                                                                        animation:
+                                                                            _colorAnimation,
+                                                                        builder:
+                                                                            (context,
+                                                                                child) {
+                                                                          return Text(
+                                                                            item.specialPrice!.toStringAsFixed(2),
+                                                                            style:
+                                                                                TextStyle(
+                                                                              fontSize: 20.sp,
+                                                                              fontWeight: FontWeight.bold,
+                                                                              color: _colorAnimation.value, // Apply color animation
+                                                                            ),
+                                                                          );
+                                                                        },
                                                                       ),
                                                                     );
                                                                   },
@@ -1471,17 +1723,20 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
                                 ),
                               ),
                   ),
-                  SizedBox(height: 10.h),
-                  AnimatedBuilder(
-                    animation: _animation,
-                    builder: (context, child) {
-                      return Transform.translate(
+                ),
+                SizedBox(height: 10.h),
+                AnimatedBuilder(
+                  animation: _animation,
+                  builder: (context, child) {
+                    return Expanded(
+                      flex: 2,
+                      child: Transform.translate(
                         offset: Offset(0, _animation.value),
                         child: Column(
                           children: [
                             SizedBox(
-                              width: 90.w,
-                              height: 90.h,
+                              width: 75.w,
+                              height: 75.h,
                               child: const Image(
                                 image: AssetImage('assets/images/qr_code.png'),
                                 fit: BoxFit.contain,
@@ -1498,11 +1753,11 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
                             ),
                           ],
                         ),
-                      );
-                    },
-                  ),
-                ],
-              ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           )
         ],
