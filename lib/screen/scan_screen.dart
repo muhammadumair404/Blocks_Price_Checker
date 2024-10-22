@@ -338,15 +338,15 @@
 //     });
 //   }
 
-//   void _addProduct(Map<String, dynamic> element) {
-//     productList.add(ProductModel(
-//         keycode: element['Id'].toString(),
-//         sku: element['Barcode'].toString(),
-//         name: element['product_name'],
-//         retailPrice: double.tryParse(element['retail_price'].toString()) ?? 0.0,
-//         specialPrice:
-//             double.tryParse(element['special_price'].toString()) ?? 0.0));
-//   }
+// void _addProduct(Map<String, dynamic> element) {
+//   productList.add(ProductModel(
+//       keycode: element['Id'].toString(),
+//       sku: element['Barcode'].toString(),
+//       name: element['product_name'],
+//       retailPrice: double.tryParse(element['retail_price'].toString()) ?? 0.0,
+//       specialPrice:
+//           double.tryParse(element['special_price'].toString()) ?? 0.0));
+// }
 
 //   void showBottomSnackBar(String message) {
 //     final overlay = Overlay.of(context);
@@ -1088,25 +1088,6 @@ WHERE
     });
   }
 
-  // void _startClearProductTimer() {
-  //   // Cancel any existing timer before starting a new one
-  //   _clearProductTimer?.cancel();
-
-  //   _clearProductTimer = Timer(const Duration(seconds: 15), () {
-  //     setState(() {
-  //       productList.clear(); // Clear the product list
-  //       imageUrl = ''; // Clear the image URL
-  //     });
-
-  //     // Show a message or simply rely on the UI update
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(
-  //         content: Text('Product data cleared.'),
-  //       ),
-  //     );
-  //   });
-  // }
-
   Future<void> getProductsTableData(String text) async {
     setState(() {
       isLoading = true;
@@ -1219,6 +1200,7 @@ WHERE
               skuResponse.cast<Map<String, dynamic>>();
           for (var element in tempResult) {
             _addProduct(element);
+            print('Element :>>> $element');
           }
         }
       }
@@ -1251,20 +1233,6 @@ WHERE
     });
   }
 
-  // void _addProduct(Map<String, dynamic> element) {
-  //   productList.add(
-  //     ProductModel(
-  //         keycode: element['Id'].toString(),
-  //         sku: element['Barcode'].toString(),
-  //         name: element['product_name'],
-  //         mixAndMatch: element['Name'],
-  //         retailPrice:
-  //             double.tryParse(element['retail_price'].toString()) ?? 0.0,
-  //         specialPrice:
-  //             double.tryParse(element['special_price'].toString()) ?? 0.0),
-  //   );
-  // }
-
   void _addProduct(Map<String, dynamic> element, {String mixMatch = ''}) {
     final keycode = element['Id']?.toString() ?? '';
     final sku = element['Barcode']?.toString() ?? '';
@@ -1273,11 +1241,11 @@ WHERE
         double.tryParse(element['retail_price']?.toString() ?? '0.0') ?? 0.0;
     final specialPrice =
         double.tryParse(element['special_price']?.toString() ?? '0.0') ?? 0.0;
-    // final mixMatch = element['Name']?.toString() ?? '';
+    final mixMatch = element['Name']?.toString() ?? '';
 
     log('Product list : ${productList.isEmpty}');
 
-    if (keycode.isNotEmpty && sku.isNotEmpty) {
+    if (keycode.isNotEmpty || sku.isNotEmpty) {
       // Ensure the essential data is present
       productList.add(
         ProductModel(
@@ -1305,7 +1273,7 @@ WHERE
             child: Container(
               padding: const EdgeInsets.all(12.0),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.7),
+                color: Colors.green,
                 borderRadius: BorderRadius.circular(8.0),
               ),
               child: Text(
@@ -1396,6 +1364,8 @@ WHERE
                   child: TextFormField(
                     style: const TextStyle(color: Colors.white),
                     autofocus: true,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     controller: controller,
                     focusNode: _focusNode,
                     onFieldSubmitted: (s) {
@@ -1718,8 +1688,8 @@ WHERE
                               )
                             : Center(
                                 child: Text(
-                                  'No Product Found!',
-                                  style: TextStyle(fontSize: 7.sp),
+                                  'Please Scan Your Product',
+                                  style: TextStyle(fontSize: 15.sp),
                                 ),
                               ),
                   ),
