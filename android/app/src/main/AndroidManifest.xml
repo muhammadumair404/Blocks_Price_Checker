@@ -9,9 +9,9 @@
 
 
     <application
-        android:label="Blocks Guide"
+        android:label="BLOCKS PRICE CHECKER"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
 
         <!-- DeviceAdminReceiver to manage the device admin privileges -->
         <receiver

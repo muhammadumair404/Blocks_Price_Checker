@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 1.0.1+1
 
 environment:
   sdk: '>=3.2.6 <4.0.0'
@@ -43,6 +43,25 @@ dependencies:
   provider: ^6.1.2
   intl: ^0.19.0
   catcher: ^0.8.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.2.18
+
+
+flutter_native_splash:
+  color: "#C2C2C2"
+  image: "assets/images/logo.png"
+  android: true
+  ios: true
+  fill: true
+  android_gravity: center # Position the image in the center
+  ios_content_mode: scaleAspectFill # Make the image fill the screen on iOS
+  fade_in_duration: 300 # Milliseconds for fade-in effect
+  fullscreen: true # Set to true to cover the status bar
+  
+
+  android_12:
+    icon_background_color: "#C2C2C2"
+    image: "assets/images/logo.png"
 
 dev_dependencies:
   flutter_test:
@@ -70,6 +89,13 @@ flutter:
   assets:
     - assets/images/
     # - images/a_dot_ham.jpeg
+
+
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/logo.png"
+  image_path_android: "assets/images/logo.png"
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
