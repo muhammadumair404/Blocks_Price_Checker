@@ -144,18 +144,22 @@ class KioskModeManager {
     final connectToSqlServerDirectlyPlugin = ConnectToSqlServerDirectly();
     bool connect = false;
 
-    TextEditingController serverController =
-        TextEditingController(text: '192.168.100.26');
-    TextEditingController databaseController =
-        TextEditingController(text: 'TestDB');
-    TextEditingController usernameController =
-        TextEditingController(text: 'SuperAdmin');
-    TextEditingController passwordController =
-        TextEditingController(text: 'Ali@00786');
+    TextEditingController serverController = TextEditingController();
+    TextEditingController databaseController = TextEditingController();
+    TextEditingController usernameController = TextEditingController();
+    TextEditingController passwordController = TextEditingController();
 
     final connectionProvider = context.read<ConnectionProvider>();
 
+    // Load saved preferences and display them in the text fields
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    serverController.text = prefs.getString('serverIp') ?? '192.168.100.26';
+    databaseController.text = prefs.getString('database') ?? 'TestDB';
+    usernameController.text = prefs.getString('userName') ?? 'SuperAdmin';
+    passwordController.text = prefs.getString('password') ?? 'Ali@00786';
+
     // Function to test connection
+
     Future<void> testConnection(BuildContext context, Function setState) async {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       try {
@@ -174,11 +178,7 @@ class KioskModeManager {
 
       final response = await connectToSqlServerDirectlyPlugin
           .getRowsOfQueryResult("SELECT TOP 1 * FROM Product;");
-      if (response.toString().contains('java')) {
-        connect = false;
-      } else {
-        connect = true;
-      }
+      connect = response.toString().contains('java') ? false : true;
 
       // Handle connection result
       if (connect) {
@@ -214,17 +214,11 @@ class KioskModeManager {
                     'You have successfully connected to the server. If you cancel, the connection will be lost. Do you want to proceed?'),
                 actions: [
                   TextButton(
-                    onPressed: () {
-                      Navigator.of(context)
-                          .pop(false); // Return false if user cancels
-                    },
+                    onPressed: () => Navigator.of(context).pop(false),
                     child: const Text('No'),
                   ),
                   TextButton(
-                    onPressed: () {
-                      Navigator.of(context)
-                          .pop(true); // Return true if user confirms
-                    },
+                    onPressed: () => Navigator.of(context).pop(true),
                     child: const Text('Yes'),
                   ),
                 ],
@@ -239,9 +233,7 @@ class KioskModeManager {
       barrierDismissible: false,
       barrierColor: Colors.black.withOpacity(0.5),
       transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, anim1, anim2) {
-        return const SizedBox.shrink();
-      },
+      pageBuilder: (context, anim1, anim2) => const SizedBox.shrink(),
       transitionBuilder: (context, anim1, anim2, child) {
         return FadeTransition(
           opacity: anim1,
@@ -294,9 +286,7 @@ class KioskModeManager {
                 actions: [
                   TextButton(
                     child: const Text('Test Connection'),
-                    onPressed: () {
-                      testConnection(context, setState);
-                    },
+                    onPressed: () => testConnection(context, setState),
                   ),
                   TextButton(
                     child: const Text('Cancel'),
