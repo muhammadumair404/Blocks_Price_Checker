@@ -1,4 +1,4 @@
-package com.example.blocks_guide
+package com.eratech.blocks_price_checker
 
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
@@ -9,7 +9,7 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
 
-    private val CHANNEL = "com.example.blocks_guide/kiosk_mode"
+    private val CHANNEL = "com.eratech.blocks_price_checker/kiosk_mode"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

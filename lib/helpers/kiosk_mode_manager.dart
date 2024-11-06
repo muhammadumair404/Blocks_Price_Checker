@@ -9,12 +9,13 @@ import 'package:provider/provider.dart';
 import 'connection_provider.dart';
 
 class KioskModeManager {
-  static const platform = MethodChannel('com.example.blocks_guide/kiosk_mode');
+  static const platform =
+      MethodChannel('com.eratech.blocks_price_checker/kiosk_mode');
   static Timer? _popupTimer;
   static bool testSuccess = false; // Flag for successful test connection
 
   // static const MethodChannel platform =
-  //     MethodChannel('com.example.blocks_guide/kiosk_mode');
+  //     MethodChannel('com.eratech.blocks_price_checker/kiosk_mode');
 
   // // Function to start Kiosk Mode
   // static Future<void> startKioskMode() async {
@@ -153,10 +154,10 @@ class KioskModeManager {
 
     // Load saved preferences and display them in the text fields
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    serverController.text = prefs.getString('serverIp') ?? '192.168.100.26';
-    databaseController.text = prefs.getString('database') ?? 'TestDB';
-    usernameController.text = prefs.getString('userName') ?? 'SuperAdmin';
-    passwordController.text = prefs.getString('password') ?? 'Ali@00786';
+    serverController.text = prefs.getString('serverIp') ?? '';
+    databaseController.text = prefs.getString('database') ?? '';
+    usernameController.text = prefs.getString('userName') ?? '';
+    passwordController.text = prefs.getString('password') ?? '';
 
     // Function to test connection
 

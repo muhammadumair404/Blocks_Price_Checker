@@ -1,4 +1,4 @@
-// package com.example.blocks_guide
+// package com.eratech.blocks_price_checker
 
 // import android.content.BroadcastReceiver
 // import android.content.Context
@@ -18,7 +18,7 @@
 // }
 
 
-package com.example.blocks_guide // Replace with your actual package name
+package com.eratech.blocks_price_checker // Replace with your actual package name
 
 import android.content.BroadcastReceiver
 import android.content.Context
