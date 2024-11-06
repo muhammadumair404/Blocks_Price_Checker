@@ -1113,160 +1113,6 @@ WHERE
     });
   }
 
-  // Future<void> getProductsTableData(String text) async {
-  //   setState(() {
-  //     isLoading = true;
-  //     controller.text = text;
-  //   });
-  //   productList.clear();
-  //   log('Product list >>::>> ${productList.isEmpty}');
-
-  //   // Check if there is internet connectivity
-  //   var connectivityResult = await (Connectivity().checkConnectivity());
-  //   if (connectivityResult == ConnectivityResult.none) {
-  //     showBottomSnackBar(
-  //         'Couldn\'t connect to the server. Please check your connection.');
-  //     setState(() {
-  //       isLoading = false;
-  //       controller.text = '';
-  //     });
-  //     return;
-  //   }
-
-  //   bool connect = false;
-
-  //   try {
-  //     // Establish SQL Server connection using saved credentials
-  //     final SharedPreferences prefs = await SharedPreferences.getInstance();
-  //     connect = await _connectToSqlServerDirectlyPlugin.initializeConnection(
-  //       prefs.getString('serverIp')!,
-  //       prefs.getString('database')!,
-  //       prefs.getString('userName')!,
-  //       prefs.getString('password')!,
-  //       instance: '',
-  //     );
-  //   } catch (e) {
-  //     print('Failed to connect to the database: $e');
-
-  //     // Handle the host unreachable error by displaying a custom message
-  //     if (e.toString().contains('Host unreachable')) {
-  //       // Show custom error message for host unreachable
-  //       showBottomSnackBar('Please connect to the same network as the server.');
-  //     } else {
-  //       // Generic error message for any other exception
-  //       showBottomSnackBar(
-  //           'Network Error: Device is not connected or SQL server is unreachable.');
-  //     }
-
-  //     setState(() {
-  //       isLoading = false;
-  //       controller.text = '';
-  //     });
-  //     return;
-  //   }
-
-  //   if (!connect) {
-  //     showBottomSnackBar(
-  //         'Couldn\'t connect to the server. Please check your connection.');
-  //     setState(() {
-  //       isLoading = false;
-  //       controller.text = '';
-  //     });
-  //     return;
-  //   }
-
-  //   try {
-  //     final today = DateTime.now();
-
-  //     // Query to get the basic product data based on barcode or plu_id
-  //     final productResponse =
-  //         await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
-  //       "SELECT Id, Barcode, product_name, retail_price, product_type, tax, ebt_eligible_checkbox, weight_item_checkbox, loyality_point FROM Product WHERE plu_id =  '$text' OR Barcode =  '$text' ;",
-  //     );
-
-  //     if (productResponse.runtimeType == String) {
-  //       showBottomSnackBar(productResponse.toString());
-  //     } else {
-  //       List<Map<String, dynamic>> tempResult =
-  //           productResponse.cast<Map<String, dynamic>>();
-
-  //       for (var element in tempResult) {
-  //         String mixMatch = await getMixAndMatchData(element['Id'].toString());
-  //         _addProduct(element, mixMatch: mixMatch);
-  //         log('product id ${element['Id'].toString()}');
-  //         // Now we fetch and apply mix and match logic
-  //       }
-  //     }
-
-  //     // Now we fetch any special price that applies
-  //     final specialPriceResponse =
-  //         await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult("""
-  //       SELECT Id, special_price
-  //       FROM Product
-  //       WHERE (plu_id = '$text' OR Barcode = '$text')
-  //       AND '$today' BETWEEN CONVERT(DATE, on_special_datetime1) AND CONVERT(DATE, on_special_datetime2)
-  //       AND on_special = 1;
-  //     """);
-
-  //     if (specialPriceResponse is List) {
-  //       for (var product in productList) {
-  //         List<Map<String, dynamic>> tempResult =
-  //             specialPriceResponse.cast<Map<String, dynamic>>();
-  //         for (var e in tempResult) {
-  //           if (product.keycode == e['Id'].toString()) {
-  //             product.specialPrice =
-  //                 double.tryParse(e["special_price"].toString()) ?? 0.0;
-  //           }
-  //         }
-  //       }
-  //     }
-
-  //     // If no product was found, check using SKU
-  //     if (productList.isEmpty) {
-  //       final skuResponse =
-  //           await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
-  //         "SELECT Product.Id, product_name, retail_price, product_type, tax, ebt_eligible_checkbox, weight_item_checkbox, loyality_point FROM Product, ProductSKUs WHERE ProductSKUs.SKU = '$text' AND Product.Id = ProductSKUs.Product_Id",
-  //       );
-  //       if (skuResponse.runtimeType == String) {
-  //         showBottomSnackBar(skuResponse.toString());
-  //       } else {
-  //         List<Map<String, dynamic>> tempResult =
-  //             skuResponse.cast<Map<String, dynamic>>();
-  //         for (var element in tempResult) {
-  //           _addProduct(element);
-  //           print('Element :>>> $element');
-  //         }
-  //       }
-  //     }
-
-  //     // Check if no product was found in both cases
-  //     if (productList.isEmpty) {
-  //       showBottomSnackBar('No product found');
-  //     } else {
-  //       // Fetch product image if found
-  //       final imageResponse =
-  //           await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
-  //         "SELECT image_url FROM Product WHERE Barcode = '$text'",
-  //       );
-
-  //       if (imageResponse is List && imageResponse.isNotEmpty) {
-  //         imageUrl = imageResponse.first["image_url"] ?? '';
-  //       } else {
-  //         imageUrl = '';
-  //       }
-  //     }
-  //   } catch (error) {
-  //     print('Error occurred while querying data: $error');
-  //     showBottomSnackBar('An error occurred while fetching data. $error');
-  //   }
-
-  //   setState(() {
-  //     isLoading = false;
-  //     controller.text = '';
-  //     _startClearProductTimer(); // Start the timer to clear product data
-  //   });
-  // }
-
   Future<void> getProductsTableData(String text) async {
     setState(() {
       isLoading = true;
@@ -1292,13 +1138,22 @@ WHERE
     try {
       // Establish SQL Server connection using saved credentials
       final SharedPreferences prefs = await SharedPreferences.getInstance();
-      connect = await _connectToSqlServerDirectlyPlugin.initializeConnection(
-        prefs.getString('serverIp')!,
-        prefs.getString('database')!,
-        prefs.getString('userName')!,
-        prefs.getString('password')!,
-        instance: '',
-      );
+      if (prefs.getString('serverIp') != null &&
+          prefs.getString('database') != null &&
+          prefs.getString('userName') != null &&
+          prefs.getString('password') != null) {
+        final tables = await _connectToSqlServerDirectlyPlugin
+            .getRowsOfQueryResult('SELECT * FROM INFORMATION_SCHEMA.TABLES');
+
+        if (tables.runtimeType == List) {
+          List<Map<String, dynamic>> tablesList =
+              tables.cast<Map<String, dynamic>>();
+
+          connect = tablesList.isNotEmpty;
+        }
+
+        print("Connected to $connect");
+      }
     } catch (e) {
       print('Failed to connect to the database: $e');
 
@@ -1319,7 +1174,9 @@ WHERE
       return;
     }
 
+    print('tetestses $connect');
     if (!connect) {
+      print("fdasfdas");
       showBottomSnackBar(
           'Couldn\'t connect to the server. Please check your connection.');
       setState(() {
@@ -1427,7 +1284,6 @@ WHERE
         double.tryParse(element['retail_price']?.toString() ?? '0.0') ?? 0.0;
     final specialPrice =
         double.tryParse(element['special_price']?.toString() ?? '0.0') ?? 0.0;
-    final mixMatch = element['Name']?.toString() ?? '';
 
     log('Product list : ${productList.isEmpty}');
 
@@ -1557,6 +1413,7 @@ WHERE
                     onFieldSubmitted: (s) {
                       log('Print S >>> $s');
                       getProductsTableData(s);
+
                       _focusNode.requestFocus();
                     },
                     decoration: InputDecoration(
@@ -1708,7 +1565,7 @@ WHERE
                                                             ),
                                                           ),
                                                           Expanded(
-                                                            flex: 2,
+                                                            // flex: 2,
                                                             child: FittedBox(
                                                               child: Text(
                                                                 item.retailPrice
@@ -1778,7 +1635,7 @@ WHERE
                                                             const EdgeInsets
                                                                 .symmetric(
                                                                 horizontal:
-                                                                    8.0),
+                                                                    15.0),
                                                         child: Container(
                                                           height: 1.h,
                                                           color: Colors.grey,
@@ -1789,7 +1646,7 @@ WHERE
                                                             const EdgeInsets
                                                                 .symmetric(
                                                                 horizontal:
-                                                                    8.0),
+                                                                    50.0),
                                                         child: Row(
                                                           mainAxisAlignment:
                                                               MainAxisAlignment
