@@ -1,4 +1,5 @@
 import 'package:blocks_guide/helpers/connection_provider.dart';
+import 'package:blocks_guide/screen/fake_ui.dart';
 import 'package:blocks_guide/screen/scan_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -20,7 +21,7 @@ void main() async {
           ScreenUtil.init(ctx);
           return const MaterialApp(
             debugShowCheckedModeBanner: false,
-            home: ScanScreen(),
+            home: ScanScreen1(),
           );
         },
       ),
