@@ -193,6 +193,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.1"
+  device_policy_manager:
+    dependency: "direct main"
+    description:
+      name: device_policy_manager
+      sha256: "85b83c6518ab5b8fbd6141abf724b5221b6b21531e0661e9875553325484c133"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.1"
   dio:
     dependency: transitive
     description:
@@ -360,14 +368,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.9.0"
-  kiosk_mode:
-    dependency: "direct main"
-    description:
-      name: kiosk_mode
-      sha256: "7bd89c1f8d8ded865ec4b57116c22bef9db02aad7d174972c9c62483529509da"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.5.0+5"
   leak_tracker:
     dependency: transitive
     description:
@@ -653,14 +653,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.2"
-  stream_transform:
-    dependency: transitive
-    description:
-      name: stream_transform
-      sha256: "14a00e794c7c11aa145a170587321aedce29769c08d7f58b1d141da75e3b1c6f"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.0"
   string_scanner:
     dependency: transitive
     description:
