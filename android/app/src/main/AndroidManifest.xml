@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" 
-    package="com.eratech.blocks_price_checker">
+    package="com.eratech.blocks_price_check">
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -9,7 +9,7 @@
 
 
     <application
-        android:label="BLOCKS PRICE CHECKER"
+        android:label="BLOCKS PRICE CHECK"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
 

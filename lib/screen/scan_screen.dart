@@ -43,7 +43,7 @@ class ProductModel {
 class _ScanScreenState extends State<ScanScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   final MethodChannel platform =
-      const MethodChannel('com.eratech.blocks_price_checker/kiosk_mode');
+      const MethodChannel('com.eratech.blocks_price_check/kiosk_mode');
   List<ProductModel> productList = [];
   bool isLoading = false;
   final FocusNode _focusNode = FocusNode();

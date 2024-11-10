@@ -10,12 +10,12 @@ import 'connection_provider.dart';
 
 class KioskModeManager {
   static const platform =
-      MethodChannel('com.eratech.blocks_price_checker/kiosk_mode');
+      MethodChannel('com.eratech.blocks_price_check/kiosk_mode');
   static Timer? _popupTimer;
   static bool testSuccess = false; // Flag for successful test connection
 
   // static const MethodChannel platform =
-  //     MethodChannel('com.eratech.blocks_price_checker/kiosk_mode');
+  //     MethodChannel('com.eratech.blocks_price_check/kiosk_mode');
 
   // // Function to start Kiosk Mode
   // static Future<void> startKioskMode() async {

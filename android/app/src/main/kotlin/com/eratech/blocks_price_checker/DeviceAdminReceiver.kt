@@ -1,4 +1,4 @@
-package com.eratech.blocks_price_checker
+package com.eratech.blocks_price_check
 
 import android.app.admin.DeviceAdminReceiver
 import android.content.Context
