@@ -491,7 +491,7 @@ WHERE
     setState(() {
       isLoading = false;
       controller.text = '';
-      _startClearProductTimer(); // Start the timer to clear product data
+      // _startClearProductTimer(); // Start the timer to clear product data
     });
   }
 
@@ -719,7 +719,6 @@ WHERE
                                             return Column(
                                               children: [
                                                 Container(
-                                                  height: 400.h,
                                                   width: 160.w,
                                                   decoration: BoxDecoration(
                                                       color: Colors.white,
@@ -732,19 +731,17 @@ WHERE
                                                         item.name,
                                                         textAlign: TextAlign.center,
                                                         style: TextStyle(
-                                                          fontSize: 13.sp,
+                                                          fontSize: 10.sp,
                                                           fontWeight: FontWeight.w700,
                                                         ),
                                                       ),
-                                                      SizedBox(height: 20.h),
                                                       Padding(
                                                         padding: const EdgeInsets.symmetric(
                                                             horizontal: 8.0),
                                                         child: Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment.center,
                                                           children: [
                                                             Expanded(
+                                                              flex: 3,
                                                               child: Text(
                                                                 'Retail Price: ',
                                                                 style: TextStyle(
@@ -763,13 +760,13 @@ WHERE
                                                               ),
                                                             ),
                                                             Expanded(
-                                                              // flex: 2,
+                                                              flex: 2,
                                                               child: FittedBox(
                                                                 child: Text(
                                                                   item.retailPrice
                                                                       .toStringAsFixed(2),
                                                                   style: TextStyle(
-                                                                    fontSize: 20.sp,
+                                                                    fontSize: 25.sp,
                                                                     fontWeight: FontWeight.bold,
                                                                     color: Colors.green,
                                                                   ),
@@ -779,7 +776,6 @@ WHERE
                                                           ],
                                                         ),
                                                       ),
-                                                      SizedBox(height: 20.h),
                                                       if (item.mixAndMatch!.isNotEmpty)
                                                         FittedBox(
                                                           child: AnimatedBuilder(
@@ -820,14 +816,13 @@ WHERE
                                                           padding: const EdgeInsets.symmetric(
                                                               horizontal: 45.0),
                                                           child: Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment.center,
                                                             children: [
                                                               Expanded(
+                                                                flex: 3,
                                                                 child: Text(
                                                                   'Discounted Price:',
                                                                   style: TextStyle(
-                                                                    fontSize: 7.sp,
+                                                                    fontSize: 8.sp,
                                                                     fontWeight: FontWeight.bold,
                                                                     color: Colors.black,
                                                                   ),
@@ -842,6 +837,7 @@ WHERE
                                                                 ),
                                                               ),
                                                               Expanded(
+                                                                flex: 2,
                                                                 child: FittedBox(
                                                                   child: AnimatedBuilder(
                                                                     animation: _scaleAnimation,
@@ -859,7 +855,6 @@ WHERE
                                                                                   .toStringAsFixed(
                                                                                       2),
                                                                               style: TextStyle(
-                                                                                fontSize: 20.sp,
                                                                                 fontWeight:
                                                                                     FontWeight.bold,
                                                                                 color: _colorAnimation
