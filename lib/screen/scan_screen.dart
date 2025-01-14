@@ -42,8 +42,7 @@ class ProductModel {
 
 class _ScanScreenState extends State<ScanScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
-  final MethodChannel platform =
-      const MethodChannel('com.eratech.blocks_price_check/kiosk_mode');
+  final MethodChannel platform = const MethodChannel('com.eratech.blocks_price_check/kiosk_mode');
   List<ProductModel> productList = [];
   bool isLoading = false;
   final FocusNode _focusNode = FocusNode();
@@ -91,13 +90,11 @@ class _ScanScreenState extends State<ScanScreen>
     }
   }
 
-  bool isWithinDateRange(
-      DateTime startDate, DateTime endDate, DateTime currentDate) {
+  bool isWithinDateRange(DateTime startDate, DateTime endDate, DateTime currentDate) {
     return startDate.isBefore(currentDate) && endDate.isAfter(currentDate);
   }
 
-  bool isWithinTimeRange(
-      String startTime, String endTime, DateTime currentTime) {
+  bool isWithinTimeRange(String startTime, String endTime, DateTime currentTime) {
     final format = DateFormat.Hms();
     final start = format.parse(startTime);
     final end = format.parse(endTime);
@@ -118,24 +115,24 @@ class _ScanScreenState extends State<ScanScreen>
       'Friday',
       'Saturday'
     ];
-    String currentDayName = weekdays[today.weekday %
-        7]; // Weekday starts from 1 (Monday), so adjust for Sunday.
+    String currentDayName =
+        weekdays[today.weekday % 7]; // Weekday starts from 1 (Monday), so adjust for Sunday.
     String weekdayCheck = "${currentDayName}_Check"; // e.g., "[Monday_Check]"
 
     log('Crurrent Day :>>> $weekdayCheck');
     var data = [];
-
     try {
+      log('Before query execution');
+
       // Query to get mix and match details for the product
-      final response = await _connectToSqlServerDirectlyPlugin
-          .getRowsOfQueryResult("""SELECT 
-    MAM.* 
-FROM 
+      final response = await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult("""SELECT
+    MAM.*
+FROM
     Mix_And_Match MAM
-JOIN 
+JOIN
     Mix_And_Match_Products MAMP
     ON MAM.Id = MAMP.Mix_And_Match_Id
-WHERE 
+WHERE
     MAMP.Product_Id = '$productId'
     AND MAM.Is_Active = '1'
     AND (
@@ -146,15 +143,14 @@ WHERE
         (MAM.Is_Time_Restricted = '1' AND GETDATE() BETWEEN MAM.Restricted_Time_Start_Date AND MAM.Restricted_Time_End_Date)
         OR MAM.Is_Time_Restricted = '0'
     ); """);
-
-      //       ("""
-      //   SELECT Mix_And_Match.Id, Mix_And_Match.Discount, Mix_And_Match.Type, Mix_And_Match.Quantity, Mix_And_Match.Is_Limited_Date,
-      //          Mix_And_Match.Limited_Start_Date, Mix_And_Match.Limited_End_Date, Mix_And_Match.Is_Time_Restricted,
-      //          Mix_And_Match.Restricted_Time_Start_Date, Mix_And_Match.Restricted_Time_End_Date, $weekdayCheck
-      //   FROM Mix_And_Match, Mix_And_Match_Products
-      //   WHERE Mix_And_Match.Id = Mix_And_Match_Products.Mix_And_Match_Id
-      //   AND Mix_And_Match_Products.Product_Id = '$productId'
-      //   AND Mix_And_Match.Is_Active = '1';
+      //     ("""
+      // SELECT Mix_And_Match.Id, Mix_And_Match.Discount, Mix_And_Match.Type, Mix_And_Match.Quantity, Mix_And_Match.Is_Limited_Date,
+      //        Mix_And_Match.Limited_Start_Date, Mix_And_Match.Limited_End_Date, Mix_And_Match.Is_Time_Restricted,
+      //        Mix_And_Match.Restricted_Time_Start_Date, Mix_And_Match.Restricted_Time_End_Date, $weekdayCheck
+      // FROM Mix_And_Match, Mix_And_Match_Products
+      // WHERE Mix_And_Match.Id = Mix_And_Match_Products.Mix_And_Match_Id
+      // AND Mix_And_Match_Products.Product_Id = '$productId'
+      // AND Mix_And_Match.Is_Active = '1';
       // """);
       log('getMixAndMatchData response >>> $response');
       if (response != null && response is List && response.isNotEmpty) {
@@ -235,8 +231,7 @@ WHERE
       vsync: this,
     )..repeat(reverse: true);
 
-    _scaleAnimation =
-        Tween<double>(begin: 1.0, end: 0.5).animate(_scaleController);
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.5).animate(_scaleController);
 
     // Color Transition Animation
     _colorController = AnimationController(
@@ -266,8 +261,8 @@ WHERE
 
       // Try to establish a connection using the saved credentials
       try {
-        isConnected = await _connectToSqlServerDirectlyPlugin
-            .initializeConnection(serverIp, database, username, password);
+        isConnected = await _connectToSqlServerDirectlyPlugin.initializeConnection(
+            serverIp, database, username, password);
 
         if (isConnected) {
           // Test with a simple query to confirm the connection
@@ -283,8 +278,7 @@ WHERE
     }
 
     // Update connection status in ConnectionProvider and SharedPreferences
-    Provider.of<ConnectionProvider>(context, listen: false)
-        .updateConnectionStatus(isConnected);
+    Provider.of<ConnectionProvider>(context, listen: false).updateConnectionStatus(isConnected);
     prefs.setBool('connection', isConnected);
   }
 
@@ -297,8 +291,7 @@ WHERE
     _scaleController.dispose();
     _colorController.dispose(); // Dispose the controller
     _timer.cancel();
-    _clearProductTimer
-        ?.cancel(); // Cancel the timer when the screen is disposed
+    _clearProductTimer?.cancel(); // Cancel the timer when the screen is disposed
     _timer.cancel();
     super.dispose();
   }
@@ -334,12 +327,12 @@ WHERE
     });
     productList.clear();
     log('Product list >>::>> ${productList.isEmpty}');
+    log('TextField Text >>::>> $text');
 
     // Check if there is internet connectivity
     var connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.none) {
-      showBottomSnackBar(
-          'Couldn\'t connect to the server. Please check your connection.');
+      showBottomSnackBar('Couldn\'t connect to the server. Please check your connection.');
       setState(() {
         isLoading = false;
         controller.text = '';
@@ -359,9 +352,11 @@ WHERE
         final tables = await _connectToSqlServerDirectlyPlugin
             .getRowsOfQueryResult('SELECT * FROM INFORMATION_SCHEMA.TABLES');
 
+        log('Tables>>> $tables');
+
         if (tables.runtimeType == List) {
-          List<Map<String, dynamic>> tablesList =
-              tables.cast<Map<String, dynamic>>();
+          List<Map<String, dynamic>> tablesList = tables.cast<Map<String, dynamic>>();
+          log('Tables List>>> $tablesList');
 
           connect = tablesList.isNotEmpty;
         }
@@ -377,8 +372,7 @@ WHERE
         showBottomSnackBar('Please connect to the same network as the server.');
       } else {
         // Generic error message for any other exception
-        showBottomSnackBar(
-            'Network Error: Device is not connected or SQL server is unreachable.');
+        showBottomSnackBar('Network Error: Device is not connected or SQL server is unreachable.');
       }
 
       setState(() {
@@ -391,8 +385,7 @@ WHERE
     print('tetestses $connect');
     if (!connect) {
       print("fdasfdas");
-      showBottomSnackBar(
-          'Couldn\'t connect to the server. Please check your connection.');
+      showBottomSnackBar('Couldn\'t connect to the server. Please check your internet connection.');
       setState(() {
         isLoading = false;
         controller.text = '';
@@ -402,21 +395,27 @@ WHERE
 
     try {
       final today = DateTime.now();
+      log('Today Date: $today');
 
       // Query to get the basic product data based on barcode or plu_id
-      final productResponse =
-          await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
-        "SELECT Id, Barcode, product_name, retail_price, product_type, tax, ebt_eligible_checkbox, weight_item_checkbox, loyality_point FROM Product WHERE plu_id =  '$text' OR Barcode =  '$text' ;",
-      );
+      final productResponse = await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
+          // """SELECT Id, Barcode, product_name, retail_price, product_type, tax, ebt_eligible_checkbox, weight_item_checkbox, loyality_point FROM Product WHERE plu_id =  '$text' OR Barcode =  '$text' ;""",
+          """SELECT Id, Barcode, product_name, retail_price, product_type, tax, ebt_eligible_checkbox, weight_item_checkbox, loyality_point FROM Product WHERE Id In(select Product_Id from ProductSKUs where SKU = '$text') or Barcode = '$text' or plu_id = '$text';""");
+      log('Text:?? $text');
+
+      log('product Response>>>>: $productResponse');
 
       if (productResponse.runtimeType == String) {
         showBottomSnackBar(productResponse.toString());
       } else {
-        List<Map<String, dynamic>> tempResult =
-            productResponse.cast<Map<String, dynamic>>();
+        List<Map<String, dynamic>> tempResult = productResponse.cast<Map<String, dynamic>>();
+        log('Temp Result>>>:  $tempResult');
 
         for (var element in tempResult) {
+          log('Before query execution');
+
           String mixMatch = await getMixAndMatchData(element['Id'].toString());
+          log('MixMatch: $mixMatch');
           _addProduct(element, mixMatch: mixMatch);
           log('product id ${element['Id'].toString()}');
           // Now we fetch and apply mix and match logic
@@ -424,21 +423,27 @@ WHERE
       }
 
       // Now we fetch any special price that applies
-      final specialPriceResponse = await _connectToSqlServerDirectlyPlugin
-          .getRowsOfQueryResult("""SELECT Id, special_price 
-          FROM Product
-          WHERE (plu_id = '$text' OR Barcode = '$text')
-          AND '$today' BETWEEN CONVERT(DATE, on_special_datetime1) AND CONVERT(DATE, on_special_datetime2)
-          AND on_special = 1;""");
+      final specialPriceResponse =
+          await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult("""	SELECT Id, special_price 
+FROM Product
+WHERE 
+    (plu_id = '$text' OR Barcode = '$text' OR Id IN (SELECT Product_Id FROM ProductSKUs WHERE SKU = '$text'))
+    AND CONVERT(DATE, GETDATE()) BETWEEN CONVERT(DATE, on_special_datetime1) AND CONVERT(DATE, on_special_datetime2)
+    AND on_special = 1;
+""");
 
+      // ("""SELECT Id, special_price
+      // FROM Product
+      // WHERE (plu_id = '$text' OR Barcode = '$text' OR sku = '$text')
+      // AND '$today' BETWEEN CONVERT(DATE, on_special_datetime1) AND CONVERT(DATE, on_special_datetime2)
+      // AND on_special = 1;""");
+      log('special Price Response:    $specialPriceResponse');
       if (specialPriceResponse is List) {
         for (var product in productList) {
-          List<Map<String, dynamic>> tempResult =
-              specialPriceResponse.cast<Map<String, dynamic>>();
+          List<Map<String, dynamic>> tempResult = specialPriceResponse.cast<Map<String, dynamic>>();
           for (var e in tempResult) {
             if (product.keycode == e['Id'].toString()) {
-              product.specialPrice =
-                  double.tryParse(e["special_price"].toString()) ?? 0.0;
+              product.specialPrice = double.tryParse(e["special_price"].toString()) ?? 0.0;
             }
           }
         }
@@ -446,15 +451,14 @@ WHERE
 
       // If no product was found, check using SKU
       if (productList.isEmpty) {
-        final skuResponse =
-            await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
+        final skuResponse = await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
           "SELECT Product.Id, product_name, retail_price, product_type, tax, ebt_eligible_checkbox, weight_item_checkbox, loyality_point FROM Product, ProductSKUs WHERE ProductSKUs.SKU = '$text' AND Product.Id = ProductSKUs.Product_Id",
         );
+        log('SKU Response:    $skuResponse');
         if (skuResponse.runtimeType == String) {
           showBottomSnackBar(skuResponse.toString());
         } else {
-          List<Map<String, dynamic>> tempResult =
-              skuResponse.cast<Map<String, dynamic>>();
+          List<Map<String, dynamic>> tempResult = skuResponse.cast<Map<String, dynamic>>();
           for (var element in tempResult) {
             _addProduct(element);
             print('Element :>>> $element');
@@ -467,13 +471,14 @@ WHERE
         showBottomSnackBar('No product found');
       } else {
         // Fetch product image if found
-        final imageResponse =
-            await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
+        final imageResponse = await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
           "SELECT image_url FROM Product WHERE Barcode = '$text'",
         );
+        log('Image Response:    $imageResponse');
 
         if (imageResponse is List && imageResponse.isNotEmpty) {
           imageUrl = imageResponse.first["image_url"] ?? '';
+          log('Image URL: $imageUrl');
         } else {
           imageUrl = '';
         }
@@ -494,10 +499,8 @@ WHERE
     final keycode = element['Id']?.toString() ?? '';
     final sku = element['Barcode']?.toString() ?? '';
     final name = element['product_name'] ?? 'Unknown Product';
-    final retailPrice =
-        double.tryParse(element['retail_price']?.toString() ?? '0.0') ?? 0.0;
-    final specialPrice =
-        double.tryParse(element['special_price']?.toString() ?? '0.0') ?? 0.0;
+    final retailPrice = double.tryParse(element['retail_price']?.toString() ?? '0.0') ?? 0.0;
+    final specialPrice = double.tryParse(element['special_price']?.toString() ?? '0.0') ?? 0.0;
 
     log('Product list : ${productList.isEmpty}');
 
@@ -612,8 +615,7 @@ WHERE
               ),
             ),
             Padding(
-              padding:
-                  const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0).r,
+              padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0).r,
               child: Column(
                 children: [
                   SizedBox(
@@ -626,9 +628,9 @@ WHERE
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       controller: controller,
                       focusNode: _focusNode,
-                      onFieldSubmitted: (s) {
-                        log('Print S >>> $s');
-                        getProductsTableData(s);
+                      onFieldSubmitted: (value) {
+                        log('item mixmatch : $value');
+                        getProductsTableData(value);
 
                         _focusNode.requestFocus();
                       },
@@ -636,8 +638,7 @@ WHERE
                         labelText: 'Scan Your Product',
                         labelStyle: TextStyle(
                           fontSize: 7.sp,
-                          color:
-                              _focusNode.hasFocus ? Colors.white : Colors.grey,
+                          color: _focusNode.hasFocus ? Colors.white : Colors.grey,
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(
@@ -684,24 +685,19 @@ WHERE
                                   children: [
                                     Expanded(
                                       child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(right: 8.0).r,
+                                        padding: const EdgeInsets.only(right: 8.0).r,
                                         child: Container(
                                           height: 320.h,
                                           decoration: BoxDecoration(
                                             image: imageUrl.isNotEmpty
                                                 ? DecorationImage(
-                                                    image:
-                                                        NetworkImage(imageUrl),
-                                                    filterQuality:
-                                                        FilterQuality.high,
+                                                    image: NetworkImage(imageUrl),
+                                                    filterQuality: FilterQuality.high,
                                                     fit: BoxFit.fill,
                                                   )
                                                 : const DecorationImage(
-                                                    image: AssetImage(
-                                                        'assets/images/sho.png'),
-                                                    filterQuality:
-                                                        FilterQuality.high,
+                                                    image: AssetImage('assets/images/sho.png'),
+                                                    filterQuality: FilterQuality.high,
                                                     fit: BoxFit.fill,
                                                   ),
                                             color: Colors.transparent,
@@ -716,10 +712,8 @@ WHERE
                                     Expanded(
                                       child: SingleChildScrollView(
                                         child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
+                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          mainAxisAlignment: MainAxisAlignment.center,
                                           children: productList.map((item) {
                                             log('item mixmatch : ${item.mixAndMatch}');
                                             return Column(
@@ -729,51 +723,34 @@ WHERE
                                                   width: 160.w,
                                                   decoration: BoxDecoration(
                                                       color: Colors.white,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              30.r)),
+                                                      borderRadius: BorderRadius.circular(30.r)),
                                                   child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .center,
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
+                                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                                    mainAxisAlignment: MainAxisAlignment.center,
                                                     children: [
                                                       Text(
                                                         item.name,
-                                                        textAlign:
-                                                            TextAlign.center,
+                                                        textAlign: TextAlign.center,
                                                         style: TextStyle(
                                                           fontSize: 13.sp,
-                                                          fontWeight:
-                                                              FontWeight.w700,
+                                                          fontWeight: FontWeight.w700,
                                                         ),
                                                       ),
                                                       SizedBox(height: 20.h),
                                                       Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                horizontal:
-                                                                    8.0),
+                                                        padding: const EdgeInsets.symmetric(
+                                                            horizontal: 8.0),
                                                         child: Row(
                                                           mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .center,
+                                                              MainAxisAlignment.center,
                                                           children: [
                                                             Expanded(
                                                               child: Text(
                                                                 'Retail Price: ',
-                                                                style:
-                                                                    TextStyle(
-                                                                  fontSize:
-                                                                      10.sp,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  color: Colors
-                                                                      .black,
+                                                                style: TextStyle(
+                                                                  fontSize: 10.sp,
+                                                                  fontWeight: FontWeight.bold,
+                                                                  color: Colors.black,
                                                                 ),
                                                               ),
                                                             ),
@@ -781,11 +758,8 @@ WHERE
                                                               '\$',
                                                               style: TextStyle(
                                                                 fontSize: 12.sp,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color: Colors
-                                                                    .green,
+                                                                fontWeight: FontWeight.bold,
+                                                                color: Colors.green,
                                                               ),
                                                             ),
                                                             Expanded(
@@ -793,17 +767,11 @@ WHERE
                                                               child: FittedBox(
                                                                 child: Text(
                                                                   item.retailPrice
-                                                                      .toStringAsFixed(
-                                                                          2),
-                                                                  style:
-                                                                      TextStyle(
-                                                                    fontSize:
-                                                                        20.sp,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    color: Colors
-                                                                        .green,
+                                                                      .toStringAsFixed(2),
+                                                                  style: TextStyle(
+                                                                    fontSize: 20.sp,
+                                                                    fontWeight: FontWeight.bold,
+                                                                    color: Colors.green,
                                                                   ),
                                                                 ),
                                                               ),
@@ -812,34 +780,22 @@ WHERE
                                                         ),
                                                       ),
                                                       SizedBox(height: 20.h),
-                                                      if (item.mixAndMatch!
-                                                          .isNotEmpty)
+                                                      if (item.mixAndMatch!.isNotEmpty)
                                                         FittedBox(
-                                                          child:
-                                                              AnimatedBuilder(
-                                                            animation:
-                                                                _scaleAnimation,
-                                                            builder: (context,
-                                                                child) {
-                                                              return Transform
-                                                                  .scale(
+                                                          child: AnimatedBuilder(
+                                                            animation: _scaleAnimation,
+                                                            builder: (context, child) {
+                                                              return Transform.scale(
                                                                 scale: _scaleAnimation
                                                                     .value, // Apply zoom animation
-                                                                child:
-                                                                    AnimatedBuilder(
-                                                                  animation:
-                                                                      _colorAnimation,
-                                                                  builder:
-                                                                      (context,
-                                                                          child) {
+                                                                child: AnimatedBuilder(
+                                                                  animation: _colorAnimation,
+                                                                  builder: (context, child) {
                                                                     return Text(
                                                                       item.mixAndMatch!,
-                                                                      style:
-                                                                          TextStyle(
-                                                                        fontSize:
-                                                                            20.sp,
-                                                                        fontWeight:
-                                                                            FontWeight.bold,
+                                                                      style: TextStyle(
+                                                                        fontSize: 20.sp,
+                                                                        fontWeight: FontWeight.bold,
                                                                         color: _colorAnimation
                                                                             .value, // Apply color animation
                                                                       ),
@@ -850,86 +806,64 @@ WHERE
                                                             },
                                                           ),
                                                         ),
-                                                      if (item.specialPrice !=
-                                                              null &&
-                                                          item.specialPrice !=
-                                                              0.00) ...[
+                                                      if (item.specialPrice != null &&
+                                                          item.specialPrice != 0.00) ...[
                                                         Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .symmetric(
-                                                                  horizontal:
-                                                                      15.0),
+                                                          padding: const EdgeInsets.symmetric(
+                                                              horizontal: 15.0),
                                                           child: Container(
                                                             height: 1.h,
                                                             color: Colors.grey,
                                                           ),
                                                         ),
                                                         Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .symmetric(
-                                                                  horizontal:
-                                                                      45.0),
+                                                          padding: const EdgeInsets.symmetric(
+                                                              horizontal: 45.0),
                                                           child: Row(
                                                             mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .center,
+                                                                MainAxisAlignment.center,
                                                             children: [
                                                               Expanded(
                                                                 child: Text(
                                                                   'Discounted Price:',
-                                                                  style:
-                                                                      TextStyle(
-                                                                    fontSize:
-                                                                        7.sp,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    color: Colors
-                                                                        .black,
+                                                                  style: TextStyle(
+                                                                    fontSize: 7.sp,
+                                                                    fontWeight: FontWeight.bold,
+                                                                    color: Colors.black,
                                                                   ),
                                                                 ),
                                                               ),
                                                               Text(
                                                                 '\$',
-                                                                style:
-                                                                    TextStyle(
-                                                                  fontSize:
-                                                                      12.sp,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  color: Colors
-                                                                      .green,
+                                                                style: TextStyle(
+                                                                  fontSize: 12.sp,
+                                                                  fontWeight: FontWeight.bold,
+                                                                  color: Colors.green,
                                                                 ),
                                                               ),
                                                               Expanded(
-                                                                child:
-                                                                    FittedBox(
-                                                                  child:
-                                                                      AnimatedBuilder(
-                                                                    animation:
-                                                                        _scaleAnimation,
-                                                                    builder:
-                                                                        (context,
-                                                                            child) {
-                                                                      return Transform
-                                                                          .scale(
+                                                                child: FittedBox(
+                                                                  child: AnimatedBuilder(
+                                                                    animation: _scaleAnimation,
+                                                                    builder: (context, child) {
+                                                                      return Transform.scale(
                                                                         scale: _scaleAnimation
                                                                             .value, // Apply zoom animation
-                                                                        child:
-                                                                            AnimatedBuilder(
+                                                                        child: AnimatedBuilder(
                                                                           animation:
                                                                               _colorAnimation,
                                                                           builder:
                                                                               (context, child) {
                                                                             return Text(
-                                                                              item.specialPrice!.toStringAsFixed(2),
+                                                                              item.specialPrice!
+                                                                                  .toStringAsFixed(
+                                                                                      2),
                                                                               style: TextStyle(
                                                                                 fontSize: 20.sp,
-                                                                                fontWeight: FontWeight.bold,
-                                                                                color: _colorAnimation.value, // Apply color animation
+                                                                                fontWeight:
+                                                                                    FontWeight.bold,
+                                                                                color: _colorAnimation
+                                                                                    .value, // Apply color animation
                                                                               ),
                                                                             );
                                                                           },
@@ -976,8 +910,7 @@ WHERE
                                 width: 75.w,
                                 height: 75.h,
                                 child: const Image(
-                                  image:
-                                      AssetImage('assets/images/qr_code.png'),
+                                  image: AssetImage('assets/images/qr_code.png'),
                                   fit: BoxFit.contain,
                                 ),
                               ),

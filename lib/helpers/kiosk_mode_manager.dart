@@ -1,5 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
@@ -9,51 +11,49 @@ import 'package:provider/provider.dart';
 import 'connection_provider.dart';
 
 class KioskModeManager {
-  static const platform =
-      MethodChannel('com.eratech.blocks_price_check/kiosk_mode');
+  // static const platform = MethodChannel('com.eratech.blocks_price_check/kiosk_mode');
   static Timer? _popupTimer;
   static bool testSuccess = false; // Flag for successful test connection
 
-  // static const MethodChannel platform =
-  //     MethodChannel('com.eratech.blocks_price_check/kiosk_mode');
+  static const MethodChannel platform = MethodChannel('com.eratech.blocks_price_check/kiosk_mode');
 
-  // // Function to start Kiosk Mode
-  // static Future<void> startKioskMode() async {
-  //   try {
-  //     var result = await platform.invokeMethod('startKioskMode');
-  //     log("Kiosk Mode started: $result");
-  //   } on PlatformException catch (e) {
-  //     log("Failed to start Kiosk Mode: '${e.message}'.");
-  //   }
-  // }
-
-  // // Function to stop Kiosk Mode
-  // static Future<void> stopKioskMode() async {
-  //   try {
-  //     var result = await platform.invokeMethod('stopKioskMode');
-  //     log("Kiosk Mode stopped: $result");
-  //   } on PlatformException catch (e) {
-  //     log("Failed to stop Kiosk Mode: '${e.message}'.");
-  //   }
-  // }
-
-  // Call this to start Kiosk Mode
+  // Function to start Kiosk Mode
   static Future<void> startKioskMode() async {
     try {
-      await platform.invokeMethod('startKioskMode');
+      var result = await platform.invokeMethod('startKioskMode');
+      log("Kiosk Mode started: $result");
     } on PlatformException catch (e) {
-      print("Failed to start Kiosk Mode: '${e.message}'.");
+      log("Failed to start Kiosk Mode: '${e.message}'.");
     }
   }
 
-  // Call this to stop Kiosk Mode
+  // Function to stop Kiosk Mode
   static Future<void> stopKioskMode() async {
     try {
-      await platform.invokeMethod('stopKioskMode');
+      var result = await platform.invokeMethod('stopKioskMode');
+      log("Kiosk Mode stopped: $result");
     } on PlatformException catch (e) {
-      print("Failed to stop Kiosk Mode: '${e.message}'.");
+      log("Failed to stop Kiosk Mode: '${e.message}'.");
     }
   }
+
+  // // Call this to start Kiosk Mode
+  // static Future<void> startKioskMode() async {
+  //   try {
+  //     await platform.invokeMethod('startKioskMode');
+  //   } on PlatformException catch (e) {
+  //     print("Failed to start Kiosk Mode: '${e.message}'.");
+  //   }
+  // }
+
+  // // Call this to stop Kiosk Mode
+  // static Future<void> stopKioskMode() async {
+  //   try {
+  //     await platform.invokeMethod('stopKioskMode');
+  //   } on PlatformException catch (e) {
+  //     print("Failed to stop Kiosk Mode: '${e.message}'.");
+  //   }
+  // }
 
   // Show password dialog and handle Kiosk Mode exit
   static Future<void> showPasswordDialog(BuildContext context) async {
@@ -65,8 +65,7 @@ class KioskModeManager {
 
     showGeneralDialog(
       context: context,
-      barrierDismissible:
-          false, // Prevent dismissal by tapping outside the dialog
+      barrierDismissible: false, // Prevent dismissal by tapping outside the dialog
       barrierColor: Colors.black.withOpacity(0.5), // Background color
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, anim1, anim2) {
@@ -87,13 +86,11 @@ class KioskModeManager {
                 decoration: const InputDecoration(
                   hintText: 'Enter password',
                   border: OutlineInputBorder(),
-                  contentPadding:
-                      EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                  contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
                 ),
                 onChanged: (value) {
                   resetPopupTimeout(context,
-                      duration:
-                          const Duration(seconds: 10)); // Reset timer on typing
+                      duration: const Duration(seconds: 10)); // Reset timer on typing
                 },
                 onSubmitted: (value) async {
                   if (passwordController.text == '1234') {
@@ -188,8 +185,7 @@ class KioskModeManager {
         setState(() {}); // Update the state to enable the Update button
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Successfully connected to the server'),
-              backgroundColor: Colors.green),
+              content: Text('Successfully connected to the server'), backgroundColor: Colors.green),
         );
       } else {
         // Clear preferences on failed connection
@@ -198,8 +194,7 @@ class KioskModeManager {
         setState(() {}); // Update the state to keep the Update button disabled
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Failed to connect to the server'),
-              backgroundColor: Colors.red),
+              content: Text('Failed to connect to the server'), backgroundColor: Colors.red),
         );
       }
     }
@@ -255,8 +250,7 @@ class KioskModeManager {
                               await stopKioskMode();
                               Navigator.of(context).pop();
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Kiosk Mode Disabled.')),
+                                const SnackBar(content: Text('Kiosk Mode Disabled.')),
                               );
                             },
                             child: const Text('Exit to OS'),
@@ -264,17 +258,13 @@ class KioskModeManager {
                         ),
                         const SizedBox(height: 10),
                         _buildTextField(context,
-                            autofocus: true,
-                            controller: serverController,
-                            labelText: 'Server *'),
+                            autofocus: true, controller: serverController, labelText: 'Server *'),
                         const SizedBox(height: 10),
                         _buildTextField(context,
-                            controller: databaseController,
-                            labelText: 'Database *'),
+                            controller: databaseController, labelText: 'Database *'),
                         const SizedBox(height: 10),
                         _buildTextField(context,
-                            controller: usernameController,
-                            labelText: 'Username *'),
+                            controller: usernameController, labelText: 'Username *'),
                         const SizedBox(height: 10),
                         _buildTextField(context,
                             controller: passwordController,
@@ -298,19 +288,16 @@ class KioskModeManager {
                         if (proceed) {
                           Navigator.of(context).pop(); // Close the dialog
                           final prefs = await SharedPreferences.getInstance();
-                          await prefs
-                              .clear(); // Clear the preferences on cancel
+                          await prefs.clear(); // Clear the preferences on cancel
                           connectionProvider.updateConnectionStatus(
                               false); // Update the connection status to false
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                                content: Text('Connection lost'),
-                                backgroundColor: Colors.red),
+                                content: Text('Connection lost'), backgroundColor: Colors.red),
                           );
                         }
                       } else {
-                        Navigator.of(context)
-                            .pop(); // Close the dialog without warning
+                        Navigator.of(context).pop(); // Close the dialog without warning
                       }
                     },
                   ),
@@ -318,12 +305,8 @@ class KioskModeManager {
                     onPressed: connect
                         ? () async {
                             // Save connection data and update settings
-                            await _handleUpdate(
-                                context,
-                                serverController,
-                                databaseController,
-                                usernameController,
-                                passwordController);
+                            await _handleUpdate(context, serverController, databaseController,
+                                usernameController, passwordController);
                           }
                         : null, // Disable if not connected
                     child: const Text('Update'),
@@ -349,8 +332,7 @@ class KioskModeManager {
       decoration: InputDecoration(
         labelText: labelText,
         border: const OutlineInputBorder(),
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+        contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
       ),
     );
   }
@@ -383,8 +365,7 @@ class KioskModeManager {
   }
 
 // Timer to automatically close popups after a specified duration
-  static void startPopupTimeout(BuildContext context,
-      {required Duration duration}) {
+  static void startPopupTimeout(BuildContext context, {required Duration duration}) {
     _popupTimer?.cancel(); // Cancel any existing timer
 
     _popupTimer = Timer(duration, () {
@@ -399,10 +380,8 @@ class KioskModeManager {
   }
 
   // Reset the popup timeout
-  static void resetPopupTimeout(BuildContext context,
-      {required Duration duration}) {
+  static void resetPopupTimeout(BuildContext context, {required Duration duration}) {
     _popupTimer?.cancel(); // Cancel the current timer
-    startPopupTimeout(context,
-        duration: duration); // Restart the timer with the same duration
+    startPopupTimeout(context, duration: duration); // Restart the timer with the same duration
   }
 }
