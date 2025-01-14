@@ -449,22 +449,22 @@ WHERE
         }
       }
 
-      // If no product was found, check using SKU
-      if (productList.isEmpty) {
-        final skuResponse = await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
-          "SELECT Product.Id, product_name, retail_price, product_type, tax, ebt_eligible_checkbox, weight_item_checkbox, loyality_point FROM Product, ProductSKUs WHERE ProductSKUs.SKU = '$text' AND Product.Id = ProductSKUs.Product_Id",
-        );
-        log('SKU Response:    $skuResponse');
-        if (skuResponse.runtimeType == String) {
-          showBottomSnackBar(skuResponse.toString());
-        } else {
-          List<Map<String, dynamic>> tempResult = skuResponse.cast<Map<String, dynamic>>();
-          for (var element in tempResult) {
-            _addProduct(element);
-            print('Element :>>> $element');
-          }
-        }
-      }
+      // // If no product was found, check using SKU
+      // if (productList.isEmpty) {
+      //   final skuResponse = await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
+      //     "SELECT Product.Id, product_name, retail_price, product_type, tax, ebt_eligible_checkbox, weight_item_checkbox, loyality_point FROM Product, ProductSKUs WHERE ProductSKUs.SKU = '$text' AND Product.Id = ProductSKUs.Product_Id",
+      //   );
+      //   log('SKU Response:    $skuResponse');
+      //   if (skuResponse.runtimeType == String) {
+      //     showBottomSnackBar(skuResponse.toString());
+      //   } else {
+      //     List<Map<String, dynamic>> tempResult = skuResponse.cast<Map<String, dynamic>>();
+      //     for (var element in tempResult) {
+      //       _addProduct(element);
+      //       print('Element :>>> $element');
+      //     }
+      //   }
+      // }
 
       // Check if no product was found in both cases
       if (productList.isEmpty) {
