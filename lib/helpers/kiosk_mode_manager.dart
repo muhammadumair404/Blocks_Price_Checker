@@ -2,6 +2,7 @@
 
 import 'dart:developer';
 
+import 'package:catcher/catcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
@@ -171,6 +172,10 @@ class KioskModeManager {
       } catch (e) {
         connect = false;
         print('Failed to connect to the database: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Please Check Your Credentials'), backgroundColor: Colors.red),
+        );
         return;
       }
 
