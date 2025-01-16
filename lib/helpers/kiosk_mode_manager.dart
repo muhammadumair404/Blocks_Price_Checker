@@ -2,7 +2,6 @@
 
 import 'dart:developer';
 
-import 'package:catcher/catcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
@@ -57,7 +56,7 @@ class KioskModeManager {
   // }
 
   // Show password dialog and handle Kiosk Mode exit
-  static Future<void> showPasswordDialog(BuildContext context) async {
+  Future<void> showPasswordDialog(BuildContext context) async {
     TextEditingController passwordController = TextEditingController();
     FocusNode passwordFocusNode = FocusNode();
 
@@ -96,7 +95,7 @@ class KioskModeManager {
                 onSubmitted: (value) async {
                   if (passwordController.text == '1234') {
                     Navigator.of(context).pop(); // Close the password dialog
-                    _showDatabasePopup(context); // Show the new popup
+                    showDatabasePopup(context); // Show the new popup
                   } else {
                     passwordController.clear(); // Clear the password field
                     passwordFocusNode.requestFocus(); // Request focus again
@@ -119,7 +118,7 @@ class KioskModeManager {
                 onPressed: () async {
                   if (passwordController.text == '1234') {
                     Navigator.of(context).pop(); // Close the password dialog
-                    _showDatabasePopup(context); // Show the new popup
+                    showDatabasePopup(context); // Show the new popup
                   } else {
                     passwordController.clear(); // Clear the password field
                     passwordFocusNode.requestFocus(); // Request focus again
@@ -139,7 +138,7 @@ class KioskModeManager {
     passwordFocusNode.requestFocus();
   }
 
-  static Future<void> _showDatabasePopup(BuildContext context) async {
+  Future<void> showDatabasePopup(BuildContext context) async {
     final connectToSqlServerDirectlyPlugin = ConnectToSqlServerDirectly();
     bool connect = false;
 
@@ -185,7 +184,7 @@ class KioskModeManager {
 
       // Handle connection result
       if (connect) {
-        prefs.setBool('connection', true);
+        // prefs.setBool('connection', true);
         connectionProvider.updateConnectionStatus(true);
         setState(() {}); // Update the state to enable the Update button
         ScaffoldMessenger.of(context).showSnackBar(
@@ -194,7 +193,7 @@ class KioskModeManager {
         );
       } else {
         // Clear preferences on failed connection
-        await prefs.clear();
+        // await prefs.clear();
         connectionProvider.updateConnectionStatus(false);
         setState(() {}); // Update the state to keep the Update button disabled
         ScaffoldMessenger.of(context).showSnackBar(

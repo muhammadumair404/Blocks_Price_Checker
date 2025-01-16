@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
+final GlobalKey<NavigatorState> globalKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Future.delayed(const Duration(seconds: 2)); // Set delay duration
@@ -19,9 +20,10 @@ void main() async {
         splitScreenMode: true,
         builder: (ctx, child) {
           ScreenUtil.init(ctx);
-          return const MaterialApp(
+          return MaterialApp(
             debugShowCheckedModeBanner: false,
-            home: ScanScreen(),
+            navigatorKey: globalKey,
+            home: const ScanScreen(),
           );
         },
       ),

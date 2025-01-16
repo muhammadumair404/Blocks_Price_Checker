@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 import 'package:blocks_guide/helpers/connection_provider.dart';
 import 'package:blocks_guide/helpers/kiosk_mode_manager.dart';
+import 'package:blocks_guide/provider/background_service.dart';
 import 'package:connect_to_sql_server_directly/connect_to_sql_server_directly.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -192,6 +193,7 @@ WHERE
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
+    initializeService();
     // Check if already connected to the server
     _checkInitialConnection();
     WidgetsBinding.instance.addObserver(this); // Lifecycle observer add karein
@@ -279,7 +281,7 @@ WHERE
 
     // Update connection status in ConnectionProvider and SharedPreferences
     Provider.of<ConnectionProvider>(context, listen: false).updateConnectionStatus(isConnected);
-    prefs.setBool('connection', isConnected);
+    // prefs.setBool('connection', isConnected);
   }
 
   @override
@@ -597,7 +599,7 @@ WHERE
               ),
               onPressed: () {
                 FocusScope.of(context).unfocus();
-                KioskModeManager.showPasswordDialog(context);
+                KioskModeManager().showPasswordDialog(context);
               },
             ),
           ],

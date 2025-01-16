@@ -2,8 +2,13 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:ui';
 
+import 'package:blocks_guide/helpers/connection_provider.dart';
+import 'package:blocks_guide/helpers/kiosk_mode_manager.dart';
+import 'package:blocks_guide/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void startBackgroundService() {
   final service = FlutterBackgroundService();
@@ -53,13 +58,18 @@ void onStart(ServiceInstance service) async {
 
   service.on("start").listen((event) {});
   log("service is successfully running first ${DateTime.now().second}");
+  // KioskModeManager().showDatabasePopup(context);
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  Timer.periodic(const Duration(seconds: 20), (timer) async {
+  await startTask(prefs);
+  Timer.periodic(const Duration(seconds: 5), (timer) async {
     log("service is successfully running timer ${DateTime.now().second}");
-    await fetchData();
+    await startTask(prefs);
   });
 }
 
-Future<void> fetchData() async {
-  // Fetch data from the server
+startTask(SharedPreferences prefs) async {
+  await prefs.reload();
+  bool isConnected = prefs.getBool('isConnected') ?? false;
+  log('Bg service isConnected: $isConnected');
 }
