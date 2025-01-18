@@ -2,12 +2,9 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:ui';
 
-import 'package:blocks_guide/helpers/connection_provider.dart';
-import 'package:blocks_guide/helpers/kiosk_mode_manager.dart';
-import 'package:blocks_guide/main.dart';
+import 'package:blocks_guide/helpers/connection_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void startBackgroundService() {
@@ -71,5 +68,7 @@ void onStart(ServiceInstance service) async {
 startTask(SharedPreferences prefs) async {
   await prefs.reload();
   bool isConnected = prefs.getBool('isConnected') ?? false;
+
   log('Bg service isConnected: $isConnected');
+  ConnectionHelper().checkInitialConnection();
 }

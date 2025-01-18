@@ -47,7 +47,7 @@ dependencies:
   flutter_native_splash: ^2.2.18
   shimmer: ^2.0.0
   flutter_background_service: ^5.0.10
-  network_info_plus: ^6.1.0
+  network_info_plus: ^6.1.0 
   
 
 

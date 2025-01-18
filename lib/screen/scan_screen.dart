@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
+import 'package:blocks_guide/helpers/connection_helper.dart';
 import 'package:blocks_guide/helpers/connection_provider.dart';
 import 'package:blocks_guide/helpers/kiosk_mode_manager.dart';
 import 'package:blocks_guide/provider/background_service.dart';
@@ -195,7 +196,7 @@ WHERE
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
     initializeService();
     // Check if already connected to the server
-    _checkInitialConnection();
+    ConnectionHelper().checkInitialConnection();
     WidgetsBinding.instance.addObserver(this); // Lifecycle observer add karein
     _launchAppOnBoot(); // App start hone pe kiosk mode automatically start ho
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -245,43 +246,6 @@ WHERE
       begin: Colors.green,
       end: Colors.red,
     ).animate(_colorController);
-  }
-
-  Future<void> _checkInitialConnection() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool isConnected = false;
-
-    if (prefs.containsKey('serverIp') &&
-        prefs.containsKey('database') &&
-        prefs.containsKey('userName') &&
-        prefs.containsKey('password')) {
-      // Retrieve saved credentials
-      final serverIp = prefs.getString('serverIp')!;
-      final database = prefs.getString('database')!;
-      final username = prefs.getString('userName')!;
-      final password = prefs.getString('password')!;
-
-      // Try to establish a connection using the saved credentials
-      try {
-        isConnected = await _connectToSqlServerDirectlyPlugin.initializeConnection(
-            serverIp, database, username, password);
-
-        if (isConnected) {
-          // Test with a simple query to confirm the connection
-          final testResponse = await _connectToSqlServerDirectlyPlugin
-              .getRowsOfQueryResult("SELECT TOP 1 * FROM Product;");
-
-          isConnected = testResponse != null && testResponse is List;
-        }
-      } catch (e) {
-        isConnected = false;
-        print('Failed to connect at startup: $e');
-      }
-    }
-
-    // Update connection status in ConnectionProvider and SharedPreferences
-    Provider.of<ConnectionProvider>(context, listen: false).updateConnectionStatus(isConnected);
-    // prefs.setBool('connection', isConnected);
   }
 
   @override
@@ -493,7 +457,7 @@ WHERE
     setState(() {
       isLoading = false;
       controller.text = '';
-      // _startClearProductTimer(); // Start the timer to clear product data
+      _startClearProductTimer(); // Start the timer to clear product data
     });
   }
 
