@@ -77,15 +77,15 @@ class ConnectionHelper {
     log('Connection status updated: $isConnected');
   }
 
-  //check internet connectivity
-  // Future<bool> checkConnectivity() async {
-  //   var connectivityResult = await (Connectivity().checkConnectivity());
-  //   if (connectivityResult == ConnectivityResult.mobile ||
-  //       connectivityResult == ConnectivityResult.wifi ||
-  //       connectivityResult == ConnectivityResult.ethernet) {
-  //     return true;
-  //   } else {
-  //     return false;
-  //   }
-  // }
+  // check internet connectivity
+  Future<bool> checkConnectivity() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile ||
+        connectivityResult == ConnectivityResult.wifi ||
+        connectivityResult == ConnectivityResult.ethernet) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 }

@@ -4,7 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   catcher
-  connectivity_plus_windows
+  connectivity_plus
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

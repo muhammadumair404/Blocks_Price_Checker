@@ -499,10 +499,10 @@ class KioskModeManager {
     final String currentDeviceIP = await getDeviceIPAddress();
     print('Current device IP Address: $currentDeviceIP');
     log('match ${serverController.text} currentDeviceIP $currentDeviceIP');
-    // if (serverController.text != currentDeviceIP) {
-    //   log('Given IP does not match the device IP. Connection will remain false.');
-    //   return false;
-    // }
+    if (serverController.text != currentDeviceIP) {
+      log('Given IP does not match the device IP. Connection will remain false.');
+      return false;
+    }
 
     try {
       // Initialize connection using the plugin

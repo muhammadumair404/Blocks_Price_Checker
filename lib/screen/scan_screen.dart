@@ -13,6 +13,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wifi_info_flutter/wifi_info_flutter.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -197,9 +198,39 @@ WHERE
     fetchData();
   }
 
+  /// Check network connectivity status
+  Future<String> getConnectivityStatus() async {
+    ConnectivityResult result = await Connectivity().checkConnectivity();
+
+    switch (result) {
+      case ConnectivityResult.wifi:
+        return "Connected to Wi-Fi";
+      case ConnectivityResult.mobile:
+        return "Connected to Mobile Data";
+      case ConnectivityResult.ethernet:
+        return "Connected to Ethernet";
+      case ConnectivityResult.none:
+        return "No Network Connection";
+      default:
+        return "Unknown Network Status";
+    }
+  }
+
+  /// Get current Wi-Fi SSID
+  Future<String> getWifiSSID() async {
+    try {
+      final ssid = await WifiInfo().getWifiName();
+      log('Wi-Fi SSID: $ssid');
+      return ssid ?? "Unknown SSID";
+    } catch (e) {
+      log('Error fetching Wi-Fi SSID: $e');
+      return "Error retrieving SSID";
+    }
+  }
+
   fetchData() async {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
-    initializeService();
+    // initializeService();
     // Check if already connected to the server
 
     _controller = AnimationController(
@@ -253,6 +284,7 @@ WHERE
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusScope.of(context).requestFocus(_focusNode);
     });
+    log('getConnectivityStatus >>> ${await getWifiSSID()}');
   }
 
   @override

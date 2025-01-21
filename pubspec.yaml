@@ -38,7 +38,6 @@ dependencies:
   connect_to_sql_server_directly: ^0.0.1
   device_policy_manager: ^0.0.1
   flutter_screenutil: ^5.9.3
-  connectivity_plus: ^2.3.0
   shared_preferences: ^2.2.3
   provider: ^6.1.2
   intl: ^0.19.0
@@ -50,6 +49,8 @@ dependencies:
   flutter_background_service: ^5.1.0
   network_info_plus: ^6.1.0 
   wifi_info_plugin_plus: ^2.0.2
+  connectivity_plus: ^4.0.1
+  wifi_info_flutter: ^2.0.2
   
 
 
