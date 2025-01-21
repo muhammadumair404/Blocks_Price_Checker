@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 final GlobalKey<NavigatorState> globalKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Future.delayed(const Duration(seconds: 2)); // Set delay duration
   runApp(
     MultiProvider(

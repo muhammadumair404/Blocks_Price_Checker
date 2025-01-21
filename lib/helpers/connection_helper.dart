@@ -1,11 +1,14 @@
 import 'dart:developer';
 
+import 'package:blocks_guide/helpers/connection_provider.dart';
 import 'package:connect_to_sql_server_directly/connect_to_sql_server_directly.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ConnectionHelper {
-  Future<void> checkInitialConnection() async {
+  Future<void> checkInitialConnection(BuildContext context) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     bool isConnected = false;
 
@@ -36,16 +39,18 @@ class ConnectionHelper {
       // } catch (e) {
       //   isConnected = false;
       //   log('Failed to connect at startup: $e');
-      // }12341
+      // }
       try {
         final connectToSqlServerDirectlyPlugin = ConnectToSqlServerDirectly();
         isConnected = await connectToSqlServerDirectlyPlugin.initializeConnection(
             serverIp, database, username, password);
 
         // log('checkInitialConnection isConnected after initialize >>> $isConnected');
-        final checkConnectivityStatus = await checkConnectivity();
+        // final checkConnectivityStatus = await checkConnectivity();
 
-        if (isConnected && checkConnectivityStatus) {
+        if (isConnected
+            // && checkConnectivityStatus
+            ) {
           try {
             final testResponse =
                 await connectToSqlServerDirectlyPlugin.getRowsOfQueryResult("SELECT 1");
@@ -65,19 +70,22 @@ class ConnectionHelper {
         // log('Connection status updated: $isConnected');
       }
     }
-    prefs.setBool('isConnected', isConnected);
+    // prefs.setBool('isConnected', isConnected);
+    await Provider.of<ConnectionProvider>(context, listen: false)
+        .updateConnectionStatus(isConnected, context);
+
     log('Connection status updated: $isConnected');
   }
 
   //check internet connectivity
-  Future<bool> checkConnectivity() async {
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi ||
-        connectivityResult == ConnectivityResult.ethernet) {
-      return true;
-    } else {
-      return false;
-    }
-  }
+  // Future<bool> checkConnectivity() async {
+  //   var connectivityResult = await (Connectivity().checkConnectivity());
+  //   if (connectivityResult == ConnectivityResult.mobile ||
+  //       connectivityResult == ConnectivityResult.wifi ||
+  //       connectivityResult == ConnectivityResult.ethernet) {
+  //     return true;
+  //   } else {
+  //     return false;
+  //   }
+  // }
 }

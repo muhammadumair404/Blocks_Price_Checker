@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -8,7 +7,7 @@ class ConnectionProvider with ChangeNotifier {
 
   bool get isConnected => _isConnected;
 
-  void updateConnectionStatus(bool status) {
+  Future<void> updateConnectionStatus(bool status, context) async {
     storeConnection(status);
     log('updateConnectionStatus - status: $status');
     _isConnected = status;

@@ -1,17 +1,18 @@
 import 'dart:async';
 import 'dart:developer';
+
 import 'package:blocks_guide/helpers/connection_helper.dart';
 import 'package:blocks_guide/helpers/connection_provider.dart';
 import 'package:blocks_guide/helpers/kiosk_mode_manager.dart';
 import 'package:blocks_guide/provider/background_service.dart';
 import 'package:connect_to_sql_server_directly/connect_to_sql_server_directly.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter/services.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -193,15 +194,13 @@ WHERE
   @override
   void initState() {
     super.initState();
+    fetchData();
+  }
+
+  fetchData() async {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
     initializeService();
     // Check if already connected to the server
-    ConnectionHelper().checkInitialConnection();
-    WidgetsBinding.instance.addObserver(this); // Lifecycle observer add karein
-    _launchAppOnBoot(); // App start hone pe kiosk mode automatically start ho
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      FocusScope.of(context).requestFocus(_focusNode);
-    });
 
     _controller = AnimationController(
       duration: const Duration(milliseconds: 700),
@@ -246,6 +245,14 @@ WHERE
       begin: Colors.green,
       end: Colors.red,
     ).animate(_colorController);
+
+    await ConnectionHelper().checkInitialConnection(context);
+    KioskModeManager().realTimeTestConnection();
+    WidgetsBinding.instance.addObserver(this); // Lifecycle observer add karein
+    _launchAppOnBoot(); // App start hone pe kiosk mode automatically start ho
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusScope.of(context).requestFocus(_focusNode);
+    });
   }
 
   @override
@@ -524,7 +531,8 @@ WHERE
 
   @override
   Widget build(BuildContext context) {
-    final connection = Provider.of<ConnectionProvider>(context).isConnected;
+    // final connection = Provider.of<ConnectionProvider>(context).isConnected;
+    // print('ConnectionProvider Connection: $connection');
 
     return WillPopScope(
       onWillPop: () async => false, // Disable back button
@@ -556,16 +564,54 @@ WHERE
 
           // Add settings icon with dynamic color based on connection status
           actions: [
-            IconButton(
-              icon: Icon(
-                Icons.settings,
-                color: connection ? Colors.green : Colors.red,
-              ),
-              onPressed: () {
-                FocusScope.of(context).unfocus();
-                KioskModeManager().showPasswordDialog(context);
+            Consumer<ConnectionProvider>(
+              builder: (context, value, child) {
+                bool connection = value.isConnected;
+                print('ConnectionProvider Connection: $connection');
+                return IconButton(
+                  icon: Icon(
+                    Icons.settings,
+                    color: connection ? Colors.green : Colors.red,
+                  ),
+                  onPressed: () {
+                    FocusScope.of(context).unfocus();
+                    KioskModeManager().showPasswordDialog(context);
+                  },
+                );
               },
+              // child: IconButton(
+              //     icon: Icon(
+              //       Icons.settings,
+              //       color: connection ? Colors.green : Colors.red,
+              //     ),
+              //     onPressed: () {
+              //       FocusScope.of(context).unfocus();
+              //       KioskModeManager().showPasswordDialog(context);
+              //     }),
             ),
+            // StreamBuilder<Map<String, dynamic>?>(
+            //   stream: FlutterBackgroundService().on('update'),
+            //   builder: (context, snapshot) {
+            //     if (!snapshot.hasData) {
+            //       return const Center(
+            //         child: CircularProgressIndicator(),
+            //       );
+            //     }
+            //     final data = snapshot.data!;
+            //     print('Connection >>> $data');
+            //     bool connection = data["isServer"];
+            //     return IconButton(
+            //       icon: Icon(
+            //         Icons.settings,
+            //         color: connection ? Colors.green : Colors.red,
+            //       ),
+            //       onPressed: () {
+            //         FocusScope.of(context).unfocus();
+            //         KioskModeManager().showPasswordDialog(context);
+            //       },
+            //     );
+            //   },
+            // ),
           ],
         ),
         body: Stack(
@@ -865,26 +911,28 @@ WHERE
                         flex: 2,
                         child: Transform.translate(
                           offset: Offset(0, _animation.value),
-                          child: Column(
-                            children: [
-                              SizedBox(
-                                width: 75.w,
-                                height: 75.h,
-                                child: const Image(
-                                  image: AssetImage('assets/images/qr_code.png'),
-                                  fit: BoxFit.contain,
+                          child: SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                SizedBox(
+                                  width: 75.w,
+                                  height: 75.h,
+                                  child: const Image(
+                                    image: AssetImage('assets/images/qr_code.png'),
+                                    fit: BoxFit.contain,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                "Scan your product's QRCode or Barcode here",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 5.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                Text(
+                                  "Scan your product's QRCode or Barcode here",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 5.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       );
