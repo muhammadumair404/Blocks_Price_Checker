@@ -7,10 +7,12 @@ class ConnectionProvider with ChangeNotifier {
 
   bool get isConnected => _isConnected;
 
-  Future<void> updateConnectionStatus(bool status, context) async {
+  Future<void> updateConnectionStatus(context, bool status) async {
     storeConnection(status);
     log('updateConnectionStatus - status: $status');
     _isConnected = status;
+    log('to know connected status: $_isConnected');
+
     notifyListeners();
   }
 

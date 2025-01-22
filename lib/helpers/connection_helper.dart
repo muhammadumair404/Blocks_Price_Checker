@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:developer';
 
 import 'package:blocks_guide/helpers/connection_provider.dart';
@@ -10,7 +12,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ConnectionHelper {
   Future<void> checkInitialConnection(BuildContext context) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
+    print('checkInitialConnection');
     bool isConnected = false;
+
+    print('isConnected:checkInitialConnection: $isConnected');
 
     if (prefs.containsKey('serverIp') &&
         prefs.containsKey('database') &&
@@ -21,58 +26,61 @@ class ConnectionHelper {
       final username = prefs.getString('userName')!;
       final password = prefs.getString('password')!;
 
-      // try {
-      //   final connectToSqlServerDirectlyPlugin = ConnectToSqlServerDirectly();
-      //   isConnected = await connectToSqlServerDirectlyPlugin.initializeConnection(
-      //       serverIp, database, username, password);
-
-      //   log('checkInitialConnection isConnected >>> $isConnected');
-      //   final checkConnectivityStatus = await checkConnectivity();
-      //   if (isConnected && checkConnectivityStatus) {
-      //     final testResponse = await connectToSqlServerDirectlyPlugin
-      //         .getRowsOfQueryResult("SELECT TOP 1 * FROM Product");
-      //     isConnected = testResponse != null && testResponse is List;
-      //     // log('Test Response $testResponse');
-      //   } else {
-      //     isConnected = false;
-      //   }
-      // } catch (e) {
-      //   isConnected = false;
-      //   log('Failed to connect at startup: $e');
-      // }
       try {
         final connectToSqlServerDirectlyPlugin = ConnectToSqlServerDirectly();
         isConnected = await connectToSqlServerDirectlyPlugin.initializeConnection(
             serverIp, database, username, password);
 
-        // log('checkInitialConnection isConnected after initialize >>> $isConnected');
-        // final checkConnectivityStatus = await checkConnectivity();
+        log('checkInitialConnection isConnected after initialize >>> $isConnected');
+        final checkConnectivityStatus = await checkConnectivity();
 
-        if (isConnected
-            // && checkConnectivityStatus
-            ) {
+        if (isConnected) {
+          print('connected to the database');
+
           try {
-            final testResponse =
-                await connectToSqlServerDirectlyPlugin.getRowsOfQueryResult("SELECT 1");
+            final testResponse = await connectToSqlServerDirectlyPlugin
+                .getRowsOfQueryResult("SELECT TOP 1 * FROM Product");
             isConnected = testResponse != null && testResponse is List;
             log('Query Validation Passed: $isConnected');
           } catch (queryError) {
+            Provider.of<ConnectionProvider>(context)
+                .updateConnectionStatus(context, isConnected = false);
             log('Query Validation Failed: $queryError');
             isConnected = false;
           }
+        } else {
+          print('Failed to connect to the database');
+          // showDatabasePopup(context);
+          // Provider.of<ConnectionProvider>(context)
+          //     .updateConnectionStatus(context, isConnected = false);
+          // try {
+          //   await connectToSqlServerDirectlyPlugin.initializeConnection(
+          //     serverIp,
+          //     database,
+          //     username,
+          //     password,
+          //     instance: '',
+          //   );
+          // } catch (e) {
+          //   print('Failed to connect to the database: $e');
+          //   if (context.mounted) {
+          //     ScaffoldMessenger.of(context).showSnackBar(
+          //       const SnackBar(
+          //         content: Text('Please Check Your Credentials'),
+          //         backgroundColor: Colors.red,
+          //       ),
+          //     );
+          //   }
+          // }
         }
       } catch (e) {
         isConnected = false;
         log('Failed to connect at startup: $e');
-      } finally {
-        log('Final connection status before updating prefs: $isConnected');
-        // prefs.setBool('isConnected', isConnected);
-        // log('Connection status updated: $isConnected');
       }
     }
     // prefs.setBool('isConnected', isConnected);
     await Provider.of<ConnectionProvider>(context, listen: false)
-        .updateConnectionStatus(isConnected, context);
+        .updateConnectionStatus(context, isConnected!);
 
     log('Connection status updated: $isConnected');
   }

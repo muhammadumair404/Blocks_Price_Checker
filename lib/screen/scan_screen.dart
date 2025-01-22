@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
 import 'dart:developer';
 
@@ -13,7 +15,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:wifi_info_flutter/wifi_info_flutter.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -198,40 +199,9 @@ WHERE
     fetchData();
   }
 
-  /// Check network connectivity status
-  Future<String> getConnectivityStatus() async {
-    ConnectivityResult result = await Connectivity().checkConnectivity();
-
-    switch (result) {
-      case ConnectivityResult.wifi:
-        return "Connected to Wi-Fi";
-      case ConnectivityResult.mobile:
-        return "Connected to Mobile Data";
-      case ConnectivityResult.ethernet:
-        return "Connected to Ethernet";
-      case ConnectivityResult.none:
-        return "No Network Connection";
-      default:
-        return "Unknown Network Status";
-    }
-  }
-
-  /// Get current Wi-Fi SSID
-  Future<String> getWifiSSID() async {
-    try {
-      final ssid = await WifiInfo().getWifiName();
-      log('Wi-Fi SSID: $ssid');
-      return ssid ?? "Unknown SSID";
-    } catch (e) {
-      log('Error fetching Wi-Fi SSID: $e');
-      return "Error retrieving SSID";
-    }
-  }
-
   fetchData() async {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
     // initializeService();
-    // Check if already connected to the server
 
     _controller = AnimationController(
       duration: const Duration(milliseconds: 700),
@@ -278,13 +248,12 @@ WHERE
     ).animate(_colorController);
 
     await ConnectionHelper().checkInitialConnection(context);
-    KioskModeManager().realTimeTestConnection();
+    // KioskModeManager().realTimeTestConnection();
     WidgetsBinding.instance.addObserver(this); // Lifecycle observer add karein
-    _launchAppOnBoot(); // App start hone pe kiosk mode automatically start ho
+    // _launchAppOnBoot(); // App start hone pe kiosk mode automatically start ho
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusScope.of(context).requestFocus(_focusNode);
     });
-    log('getConnectivityStatus >>> ${await getWifiSSID()}');
   }
 
   @override
@@ -563,9 +532,6 @@ WHERE
 
   @override
   Widget build(BuildContext context) {
-    // final connection = Provider.of<ConnectionProvider>(context).isConnected;
-    // print('ConnectionProvider Connection: $connection');
-
     return WillPopScope(
       onWillPop: () async => false, // Disable back button
       child: Scaffold(
@@ -593,8 +559,6 @@ WHERE
           centerTitle: true,
           backgroundColor: Colors.white,
           iconTheme: const IconThemeData(color: Colors.white),
-
-          // Add settings icon with dynamic color based on connection status
           actions: [
             Consumer<ConnectionProvider>(
               builder: (context, value, child) {

@@ -61,19 +61,19 @@
 //   Timer.periodic(const Duration(seconds: 5), (timer) async {
 //     log("service is successfully running timer ${DateTime.now().second}");
 
-//     bool isServer = await KioskModeManager().realTimeTestConnection();
+//     // bool isServer = await KioskModeManager().realTimeTestConnection();
 //     String currentDate = DateTime.now().toIso8601String();
 
-//     service.invoke(
-//       'update',
-//       {
-//         "current_date": currentDate,
-//         "isServer": isServer,
-//       },
-//     );
+//     // service.invoke(
+//     //   'update',
+//     //   {
+//     //     "current_date": currentDate,
+//     //     "isServer": isServer,
+//     //   },
+//     // );
 
-//     print('isServer $isServer currentDate $currentDate');
-//     await startTask(prefs);
+//     // print('isServer $isServer currentDate $currentDate');
+//     // await startTask(prefs);
 
 //     print("Background service is running");
 //     if (!isServiceRunning) {
