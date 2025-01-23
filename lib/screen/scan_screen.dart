@@ -249,9 +249,9 @@ WHERE
 
     _timer = Timer.periodic(const Duration(minutes: 1), (timer) async {
       final connectionProvider = Provider.of<ConnectionProvider>(context, listen: false);
+      // Check status every 1 min
       ConnectionProvider().loadConnectionStatus();
       await ConnectionHelper().checkInitialConnection(connectionProvider);
-      // Check status every 1 min
     });
     // KioskModeManager().realTimeTestConnection();
     WidgetsBinding.instance.addObserver(this); // Lifecycle observer add karein
@@ -537,7 +537,7 @@ WHERE
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async => false, // Disable back button
+      onWillPop: () async => false,
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
