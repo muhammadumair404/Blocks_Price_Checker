@@ -246,7 +246,7 @@ WHERE
       begin: Colors.green,
       end: Colors.red,
     ).animate(_colorController);
-    Provider.of<ConnectionProvider>(context, listen: false).loadConnectionStatus();
+
     _timer = Timer.periodic(const Duration(minutes: 1), (timer) async {
       final connectionProvider = Provider.of<ConnectionProvider>(context, listen: false);
      await ConnectionHelper().checkInitialConnection(connectionProvider);

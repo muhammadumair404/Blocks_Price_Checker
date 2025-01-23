@@ -33,8 +33,6 @@ class ConnectionHelper {
 
         if (isConnected) {
           log('Connected to the database');
-          connectionProvider.updateConnectionStatus(true);
-
           try {
             final testResponse = await connectToSqlServerDirectlyPlugin
                 .getRowsOfQueryResult("SELECT TOP 1 * FROM Product");
@@ -42,6 +40,7 @@ class ConnectionHelper {
 
             if (testResponse != null) {
               log('Query Validation Passed');
+              connectionProvider.updateConnectionStatus(true);
             } else {
               log('Query Validation Failed');
             }
