@@ -247,10 +247,11 @@ WHERE
       end: Colors.red,
     ).animate(_colorController);
 
-    _timer = Timer.periodic(const Duration(seconds: 10), (timer) async {
-      final connectionProvider = Provider.of<ConnectionProvider>(context, listen: true);
-     await ConnectionHelper().checkInitialConnection(connectionProvider);
-      // Check status every 1 minutes
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) async {
+      final connectionProvider = Provider.of<ConnectionProvider>(context, listen: false);
+      ConnectionProvider().loadConnectionStatus();
+      await ConnectionHelper().checkInitialConnection(connectionProvider);
+      // Check status every 1 min
     });
     // KioskModeManager().realTimeTestConnection();
     WidgetsBinding.instance.addObserver(this); // Lifecycle observer add karein
@@ -578,39 +579,7 @@ WHERE
                   },
                 );
               },
-              // child: IconButton(
-              //     icon: Icon(
-              //       Icons.settings,
-              //       color: connection ? Colors.green : Colors.red,
-              //     ),
-              //     onPressed: () {
-              //       FocusScope.of(context).unfocus();
-              //       KioskModeManager().showPasswordDialog(context);
-              //     }),
             ),
-            // StreamBuilder<Map<String, dynamic>?>(
-            //   stream: FlutterBackgroundService().on('update'),
-            //   builder: (context, snapshot) {
-            //     if (!snapshot.hasData) {
-            //       return const Center(
-            //         child: CircularProgressIndicator(),
-            //       );
-            //     }
-            //     final data = snapshot.data!;
-            //     print('Connection >>> $data');
-            //     bool connection = data["isServer"];
-            //     return IconButton(
-            //       icon: Icon(
-            //         Icons.settings,
-            //         color: connection ? Colors.green : Colors.red,
-            //       ),
-            //       onPressed: () {
-            //         FocusScope.of(context).unfocus();
-            //         KioskModeManager().showPasswordDialog(context);
-            //       },
-            //     );
-            //   },
-            // ),
           ],
         ),
         body: Stack(
@@ -673,167 +642,90 @@ WHERE
                   Expanded(
                     flex: 8,
                     child: Container(
-                      padding: const EdgeInsets.all(10).r,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(20.r),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black54,
-                            blurRadius: 5,
-                            spreadRadius: 15,
-                          ),
-                        ],
-                      ),
-                      child: isLoading
-                          ? const Center(
-                              child: CircularProgressIndicator(
-                                color: Colors.black,
-                              ),
-                            )
-                          : productList.isNotEmpty
-                              ? Row(
-                                  children: [
-                                    Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(right: 8.0).r,
-                                        child: Container(
-                                          height: 320.h,
-                                          decoration: BoxDecoration(
-                                            image: imageUrl.isNotEmpty
-                                                ? DecorationImage(
-                                                    image: NetworkImage(imageUrl),
-                                                    filterQuality: FilterQuality.high,
-                                                    fit: BoxFit.fill,
-                                                  )
-                                                : const DecorationImage(
-                                                    image: AssetImage('assets/images/sho.png'),
-                                                    filterQuality: FilterQuality.high,
-                                                    fit: BoxFit.fill,
-                                                  ),
-                                            color: Colors.transparent,
+                        padding: const EdgeInsets.all(10).r,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(20.r),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black54,
+                              blurRadius: 5,
+                              spreadRadius: 15,
+                            ),
+                          ],
+                        ),
+                        child: isLoading
+                            ? const Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.black,
+                                ),
+                              )
+                            : productList.isNotEmpty
+                                ? Row(
+                                    children: [
+                                      Expanded(
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(right: 8.0).r,
+                                          child: Container(
+                                            height: 320.h,
+                                            decoration: BoxDecoration(
+                                              image: imageUrl.isNotEmpty
+                                                  ? DecorationImage(
+                                                      image: NetworkImage(imageUrl),
+                                                      filterQuality: FilterQuality.high,
+                                                      fit: BoxFit.fill,
+                                                    )
+                                                  : const DecorationImage(
+                                                      image: AssetImage('assets/images/sho.png'),
+                                                      filterQuality: FilterQuality.high,
+                                                      fit: BoxFit.fill,
+                                                    ),
+                                              color: Colors.transparent,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    Container(
-                                        height: 350.h,
-                                        width: 1.w,
-                                        color: Colors.grey.withOpacity(0.5)),
-                                    Expanded(
-                                      child: SingleChildScrollView(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.center,
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: productList.map((item) {
-                                            log('item mixmatch : ${item.mixAndMatch}');
-                                            return Column(
-                                              children: [
-                                                Container(
-                                                  width: 160.w,
-                                                  decoration: BoxDecoration(
-                                                      color: Colors.white,
-                                                      borderRadius: BorderRadius.circular(30.r)),
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                                    mainAxisAlignment: MainAxisAlignment.center,
-                                                    children: [
-                                                      Text(
-                                                        item.name,
-                                                        textAlign: TextAlign.center,
-                                                        style: TextStyle(
-                                                          fontSize: 10.sp,
-                                                          fontWeight: FontWeight.w700,
-                                                        ),
-                                                      ),
-                                                      Padding(
-                                                        padding: const EdgeInsets.symmetric(
-                                                            horizontal: 8.0),
-                                                        child: Row(
-                                                          children: [
-                                                            Expanded(
-                                                              flex: 3,
-                                                              child: Text(
-                                                                'Retail Price: ',
-                                                                style: TextStyle(
-                                                                  fontSize: 10.sp,
-                                                                  fontWeight: FontWeight.bold,
-                                                                  color: Colors.black,
-                                                                ),
-                                                              ),
-                                                            ),
-                                                            Text(
-                                                              '\$',
-                                                              style: TextStyle(
-                                                                fontSize: 12.sp,
-                                                                fontWeight: FontWeight.bold,
-                                                                color: Colors.green,
-                                                              ),
-                                                            ),
-                                                            Expanded(
-                                                              flex: 2,
-                                                              child: FittedBox(
-                                                                child: Text(
-                                                                  item.retailPrice
-                                                                      .toStringAsFixed(2),
-                                                                  style: TextStyle(
-                                                                    fontSize: 25.sp,
-                                                                    fontWeight: FontWeight.bold,
-                                                                    color: Colors.green,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                      if (item.mixAndMatch!.isNotEmpty)
-                                                        FittedBox(
-                                                          child: AnimatedBuilder(
-                                                            animation: _scaleAnimation,
-                                                            builder: (context, child) {
-                                                              return Transform.scale(
-                                                                scale: _scaleAnimation
-                                                                    .value, // Apply zoom animation
-                                                                child: AnimatedBuilder(
-                                                                  animation: _colorAnimation,
-                                                                  builder: (context, child) {
-                                                                    return Text(
-                                                                      item.mixAndMatch!,
-                                                                      style: TextStyle(
-                                                                        fontSize: 20.sp,
-                                                                        fontWeight: FontWeight.bold,
-                                                                        color: _colorAnimation
-                                                                            .value, // Apply color animation
-                                                                      ),
-                                                                    );
-                                                                  },
-                                                                ),
-                                                              );
-                                                            },
-                                                          ),
-                                                        ),
-                                                      if (item.specialPrice != null &&
-                                                          item.specialPrice != 0.00) ...[
-                                                        Padding(
-                                                          padding: const EdgeInsets.symmetric(
-                                                              horizontal: 15.0),
-                                                          child: Container(
-                                                            height: 1.h,
-                                                            color: Colors.grey,
+                                      Container(
+                                          height: 350.h,
+                                          width: 1.w,
+                                          color: Colors.grey.withOpacity(0.5)),
+                                      Expanded(
+                                        child: SingleChildScrollView(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: productList.map((item) {
+                                              log('item mixmatch : ${item.mixAndMatch}');
+                                              return Column(
+                                                children: [
+                                                  Container(
+                                                    width: 160.w,
+                                                    decoration: BoxDecoration(
+                                                        color: Colors.white,
+                                                        borderRadius: BorderRadius.circular(30.r)),
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      children: [
+                                                        Text(
+                                                          item.name,
+                                                          textAlign: TextAlign.center,
+                                                          style: TextStyle(
+                                                            fontSize: 10.sp,
+                                                            fontWeight: FontWeight.w700,
                                                           ),
                                                         ),
                                                         Padding(
                                                           padding: const EdgeInsets.symmetric(
-                                                              horizontal: 45.0),
+                                                              horizontal: 8.0),
                                                           child: Row(
                                                             children: [
                                                               Expanded(
                                                                 flex: 3,
                                                                 child: Text(
-                                                                  'Discounted Price:',
+                                                                  'Retail Price: ',
                                                                   style: TextStyle(
-                                                                    fontSize: 8.sp,
+                                                                    fontSize: 10.sp,
                                                                     fontWeight: FontWeight.bold,
                                                                     color: Colors.black,
                                                                   ),
@@ -850,64 +742,145 @@ WHERE
                                                               Expanded(
                                                                 flex: 2,
                                                                 child: FittedBox(
-                                                                  child: AnimatedBuilder(
-                                                                    animation: _scaleAnimation,
-                                                                    builder: (context, child) {
-                                                                      return Transform.scale(
-                                                                        scale: _scaleAnimation
-                                                                            .value, // Apply zoom animation
-                                                                        child: AnimatedBuilder(
-                                                                          animation:
-                                                                              _colorAnimation,
-                                                                          builder:
-                                                                              (context, child) {
-                                                                            return Text(
-                                                                              item.specialPrice!
-                                                                                  .toStringAsFixed(
-                                                                                      2),
-                                                                              style: TextStyle(
-                                                                                fontWeight:
-                                                                                    FontWeight.bold,
-                                                                                color: _colorAnimation
-                                                                                    .value, // Apply color animation
-                                                                              ),
-                                                                            );
-                                                                          },
-                                                                        ),
-                                                                      );
-                                                                    },
+                                                                  child: Text(
+                                                                    item.retailPrice
+                                                                        .toStringAsFixed(2),
+                                                                    style: TextStyle(
+                                                                      fontSize: 25.sp,
+                                                                      fontWeight: FontWeight.bold,
+                                                                      color: Colors.green,
+                                                                    ),
                                                                   ),
                                                                 ),
                                                               ),
                                                             ],
                                                           ),
                                                         ),
+                                                        if (item.mixAndMatch!.isNotEmpty)
+                                                          FittedBox(
+                                                            child: AnimatedBuilder(
+                                                              animation: _scaleAnimation,
+                                                              builder: (context, child) {
+                                                                return Transform.scale(
+                                                                  scale: _scaleAnimation
+                                                                      .value, // Apply zoom animation
+                                                                  child: AnimatedBuilder(
+                                                                    animation: _colorAnimation,
+                                                                    builder: (context, child) {
+                                                                      return Text(
+                                                                        item.mixAndMatch!,
+                                                                        style: TextStyle(
+                                                                          fontSize: 20.sp,
+                                                                          fontWeight:
+                                                                              FontWeight.bold,
+                                                                          color: _colorAnimation
+                                                                              .value, // Apply color animation
+                                                                        ),
+                                                                      );
+                                                                    },
+                                                                  ),
+                                                                );
+                                                              },
+                                                            ),
+                                                          ),
+                                                        if (item.specialPrice != null &&
+                                                            item.specialPrice != 0.00) ...[
+                                                          Padding(
+                                                            padding: const EdgeInsets.symmetric(
+                                                                horizontal: 15.0),
+                                                            child: Container(
+                                                              height: 1.h,
+                                                              color: Colors.grey,
+                                                            ),
+                                                          ),
+                                                          Padding(
+                                                            padding: const EdgeInsets.symmetric(
+                                                                horizontal: 45.0),
+                                                            child: Row(
+                                                              children: [
+                                                                Expanded(
+                                                                  flex: 3,
+                                                                  child: Text(
+                                                                    'Discounted Price:',
+                                                                    style: TextStyle(
+                                                                      fontSize: 8.sp,
+                                                                      fontWeight: FontWeight.bold,
+                                                                      color: Colors.black,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                Text(
+                                                                  '\$',
+                                                                  style: TextStyle(
+                                                                    fontSize: 12.sp,
+                                                                    fontWeight: FontWeight.bold,
+                                                                    color: Colors.green,
+                                                                  ),
+                                                                ),
+                                                                Expanded(
+                                                                  flex: 2,
+                                                                  child: FittedBox(
+                                                                    child: AnimatedBuilder(
+                                                                      animation: _scaleAnimation,
+                                                                      builder: (context, child) {
+                                                                        return Transform.scale(
+                                                                          scale: _scaleAnimation
+                                                                              .value, // Apply zoom animation
+                                                                          child: AnimatedBuilder(
+                                                                            animation:
+                                                                                _colorAnimation,
+                                                                            builder:
+                                                                                (context, child) {
+                                                                              return Text(
+                                                                                item.specialPrice!
+                                                                                    .toStringAsFixed(
+                                                                                        2),
+                                                                                style: TextStyle(
+                                                                                  fontWeight:
+                                                                                      FontWeight
+                                                                                          .bold,
+                                                                                  color: _colorAnimation
+                                                                                      .value, // Apply color animation
+                                                                                ),
+                                                                              );
+                                                                            },
+                                                                          ),
+                                                                        );
+                                                                      },
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
                                                       ],
-                                                    ],
+                                                    ),
                                                   ),
-                                                ),
-                                              ],
-                                            );
-                                          }).toList(),
+                                                ],
+                                              );
+                                            }).toList(),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                )
-                              :
-                      Consumer<ConnectionProvider>(
-                        builder: (context, value, child) {
-                          bool connection = value.isConnected; // Provider se value access ki.
-                          return Center(
-                            child: Text(
-                              connection?  'Please Scan Your Product':'Please connect to your server',
-                              style:connection?  TextStyle(fontSize: 15.sp): TextStyle(color: Colors.red, fontSize: 15.sp),
-                            ),
-                          );
-                        },
-                      )
-
-                    ),
+                                    ],
+                                  )
+                                : Consumer<ConnectionProvider>(
+                                    builder: (context, value, child) {
+                                      bool connection =
+                                          value.isConnected; // Provider se value access ki.
+                                      return Center(
+                                        child: Text(
+                                          connection
+                                              ? 'Please Scan Your Product'
+                                              : 'Please connect to your server',
+                                          style: connection
+                                              ? TextStyle(fontSize: 15.sp)
+                                              : TextStyle(color: Colors.red, fontSize: 15.sp),
+                                        ),
+                                      );
+                                    },
+                                  )),
                   ),
                   SizedBox(height: 10.h),
                   AnimatedBuilder(

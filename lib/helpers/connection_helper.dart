@@ -8,9 +8,9 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 class ConnectionHelper {
-  Future<void> checkInitialConnection(
-      ConnectionProvider connectionProvider) async {
+  Future<void> checkInitialConnection(ConnectionProvider connectionProvider) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     log('checkInitialConnection started');
     bool isConnected = false;
@@ -23,7 +23,7 @@ class ConnectionHelper {
       final database = prefs.getString('database')!;
       final username = prefs.getString('userName')!;
       final password = prefs.getString('password')!;
-      
+
       try {
         final connectToSqlServerDirectlyPlugin = ConnectToSqlServerDirectly();
         final response = await connectToSqlServerDirectlyPlugin
@@ -33,6 +33,8 @@ class ConnectionHelper {
         log('Database connection initialized: $isConnected');
 
         if (isConnected) {
+          log('successfully connect to the database');
+
           connectionProvider.updateConnectionStatus(true);
         } else {
           log('Failed to connect to the database');
@@ -49,7 +51,6 @@ class ConnectionHelper {
 
     log('Final connection status: $isConnected');
   }
-
 
   // check internet connectivity
   Future<bool> checkConnectivity() async {
