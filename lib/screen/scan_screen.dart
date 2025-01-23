@@ -246,8 +246,12 @@ WHERE
       begin: Colors.green,
       end: Colors.red,
     ).animate(_colorController);
-
-    await ConnectionHelper().checkInitialConnection(context);
+    Provider.of<ConnectionProvider>(context, listen: false).loadConnectionStatus();
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) async {
+      final connectionProvider = Provider.of<ConnectionProvider>(context, listen: false);
+     await ConnectionHelper().checkInitialConnection(connectionProvider);
+      // Check status every 1 minutes
+    });
     // KioskModeManager().realTimeTestConnection();
     WidgetsBinding.instance.addObserver(this); // Lifecycle observer add karein
     // _launchAppOnBoot(); // App start hone pe kiosk mode automatically start ho
@@ -266,7 +270,6 @@ WHERE
     _colorController.dispose(); // Dispose the controller
     _timer.cancel();
     _clearProductTimer?.cancel(); // Cancel the timer when the screen is disposed
-    _timer.cancel();
     super.dispose();
   }
 
@@ -891,12 +894,19 @@ WHERE
                                     ),
                                   ],
                                 )
-                              : Center(
-                                  child: Text(
-                                    'Please Scan Your Product',
-                                    style: TextStyle(fontSize: 15.sp),
-                                  ),
-                                ),
+                              :
+                      Consumer<ConnectionProvider>(
+                        builder: (context, value, child) {
+                          bool connection = value.isConnected; // Provider se value access ki.
+                          return Center(
+                            child: Text(
+                              connection?  'Please Scan Your Product':'Please connect to your server',
+                              style:connection?  TextStyle(fontSize: 15.sp): TextStyle(color: Colors.red, fontSize: 15.sp),
+                            ),
+                          );
+                        },
+                      )
+
                     ),
                   ),
                   SizedBox(height: 10.h),

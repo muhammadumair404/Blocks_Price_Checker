@@ -295,7 +295,7 @@ class KioskModeManager {
                       bool status = await testConnection(context, setState);
                       print('testConnection: $status');
                       Provider.of<ConnectionProvider>(context, listen: false)
-                          .updateConnectionStatus(context, status);
+                          .updateConnectionStatus(status);
                     },
                   ),
                   TextButton(

@@ -8,14 +8,12 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 class ConnectionHelper {
-  Future<void> checkInitialConnection(BuildContext context) async {
+  Future<void> checkInitialConnection(
+      ConnectionProvider connectionProvider) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    print('checkInitialConnection');
+    log('checkInitialConnection started');
     bool isConnected = false;
-
-    print('isConnected:checkInitialConnection: $isConnected');
 
     if (prefs.containsKey('serverIp') &&
         prefs.containsKey('database') &&
@@ -31,59 +29,41 @@ class ConnectionHelper {
         isConnected = await connectToSqlServerDirectlyPlugin.initializeConnection(
             serverIp, database, username, password);
 
-        log('checkInitialConnection isConnected after initialize >>> $isConnected');
-        final checkConnectivityStatus = await checkConnectivity();
+        log('Database connection initialized: $isConnected');
 
         if (isConnected) {
-          print('connected to the database');
+          log('Connected to the database');
+          connectionProvider.updateConnectionStatus(true);
 
           try {
             final testResponse = await connectToSqlServerDirectlyPlugin
                 .getRowsOfQueryResult("SELECT TOP 1 * FROM Product");
-            isConnected = testResponse != null && testResponse is List;
-            log('Query Validation Passed: $isConnected');
+           // isConnected = testResponse != null && testResponse is List;
+
+            if (testResponse != null) {
+              log('Query Validation Passed');
+            } else {
+              log('Query Validation Failed');
+            }
           } catch (queryError) {
-            Provider.of<ConnectionProvider>(context)
-                .updateConnectionStatus(context, isConnected = false);
-            log('Query Validation Failed: $queryError');
-            isConnected = false;
+            log('Query Execution Error: $queryError');
           }
         } else {
-          print('Failed to connect to the database');
-          // showDatabasePopup(context);
-          // Provider.of<ConnectionProvider>(context)
-          //     .updateConnectionStatus(context, isConnected = false);
-          // try {
-          //   await connectToSqlServerDirectlyPlugin.initializeConnection(
-          //     serverIp,
-          //     database,
-          //     username,
-          //     password,
-          //     instance: '',
-          //   );
-          // } catch (e) {
-          //   print('Failed to connect to the database: $e');
-          //   if (context.mounted) {
-          //     ScaffoldMessenger.of(context).showSnackBar(
-          //       const SnackBar(
-          //         content: Text('Please Check Your Credentials'),
-          //         backgroundColor: Colors.red,
-          //       ),
-          //     );
-          //   }
-          // }
+          log('Failed to connect to the database');
+          connectionProvider.updateConnectionStatus(false);
         }
       } catch (e) {
-        isConnected = false;
-        log('Failed to connect at startup: $e');
+        log('Database connection error: $e');
+        connectionProvider.updateConnectionStatus(false);
       }
+    } else {
+      log('Missing database credentials in SharedPreferences');
+      connectionProvider.updateConnectionStatus(false);
     }
-    // prefs.setBool('isConnected', isConnected);
-    await Provider.of<ConnectionProvider>(context, listen: false)
-        .updateConnectionStatus(context, isConnected!);
 
-    log('Connection status updated: $isConnected');
+    log('Final connection status: ${connectionProvider.isConnected}');
   }
+
 
   // check internet connectivity
   Future<bool> checkConnectivity() async {
