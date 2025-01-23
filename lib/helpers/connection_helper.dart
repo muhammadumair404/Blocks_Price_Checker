@@ -26,33 +26,14 @@ class ConnectionHelper {
       
       try {
         final connectToSqlServerDirectlyPlugin = ConnectToSqlServerDirectly();
-        isConnected = await connectToSqlServerDirectlyPlugin.initializeConnection(
-            serverIp, database, username, password).then((value) {
-          if (value) {
-            connectionProvider.updateConnectionStatus(true);
-            return true;
-          }
-          connectionProvider.updateConnectionStatus(false);
-            return false;});
+        final response = await connectToSqlServerDirectlyPlugin
+            .getRowsOfQueryResult("SELECT TOP 1 * FROM Product;");
+        isConnected = !response.toString().contains('java');
 
         log('Database connection initialized: $isConnected');
 
         if (isConnected) {
-          log('Connected to the database');
-          try {
-            final testResponse = await connectToSqlServerDirectlyPlugin
-                .getRowsOfQueryResult("SELECT TOP 1 * FROM Product");
-           // isConnected = testResponse != null && testResponse is List;
-
-            if (testResponse != null) {
-              log('Query Validation Passed');
-
-            } else {
-              log('Query Validation Failed');
-            }
-          } catch (queryError) {
-            log('Query Execution Error: $queryError');
-          }
+          connectionProvider.updateConnectionStatus(true);
         } else {
           log('Failed to connect to the database');
           connectionProvider.updateConnectionStatus(false);
@@ -66,7 +47,7 @@ class ConnectionHelper {
       connectionProvider.updateConnectionStatus(false);
     }
 
-    log('Final connection status: ${connectionProvider.isConnected}');
+    log('Final connection status: $isConnected');
   }
 
 
