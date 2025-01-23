@@ -247,8 +247,8 @@ WHERE
       end: Colors.red,
     ).animate(_colorController);
 
-    _timer = Timer.periodic(const Duration(minutes: 1), (timer) async {
-      final connectionProvider = Provider.of<ConnectionProvider>(context, listen: false);
+    _timer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+      final connectionProvider = Provider.of<ConnectionProvider>(context, listen: true);
      await ConnectionHelper().checkInitialConnection(connectionProvider);
       // Check status every 1 minutes
     });

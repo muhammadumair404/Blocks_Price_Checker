@@ -11,8 +11,10 @@ void main() async {
 
   await Future.delayed(const Duration(seconds: 2)); // Set delay duration
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ConnectionProvider()..loadConnectionStatus(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ConnectionProvider()),
+      ],
       child: ScreenUtilInit(
         designSize: const Size(1280, 752),
         minTextAdapt: true,

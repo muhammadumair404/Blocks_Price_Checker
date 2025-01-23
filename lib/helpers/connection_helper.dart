@@ -24,6 +24,10 @@ class ConnectionHelper {
       final username = prefs.getString('userName')!;
       final password = prefs.getString('password')!;
 
+      log('serverIp : $serverIp');
+      log('database: $database');
+      log('username: $username');
+      log('password: $password');
       try {
         final connectToSqlServerDirectlyPlugin = ConnectToSqlServerDirectly();
         isConnected = await connectToSqlServerDirectlyPlugin.initializeConnection(
