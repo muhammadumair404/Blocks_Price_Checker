@@ -23,15 +23,17 @@ class ConnectionHelper {
       final database = prefs.getString('database')!;
       final username = prefs.getString('userName')!;
       final password = prefs.getString('password')!;
-
-      log('serverIp : $serverIp');
-      log('database: $database');
-      log('username: $username');
-      log('password: $password');
+      
       try {
         final connectToSqlServerDirectlyPlugin = ConnectToSqlServerDirectly();
         isConnected = await connectToSqlServerDirectlyPlugin.initializeConnection(
-            serverIp, database, username, password);
+            serverIp, database, username, password).then((value) {
+          if (value) {
+            connectionProvider.updateConnectionStatus(true);
+            return true;
+          }
+          connectionProvider.updateConnectionStatus(false);
+            return false;});
 
         log('Database connection initialized: $isConnected');
 
@@ -44,7 +46,7 @@ class ConnectionHelper {
 
             if (testResponse != null) {
               log('Query Validation Passed');
-              connectionProvider.updateConnectionStatus(true);
+
             } else {
               log('Query Validation Failed');
             }
