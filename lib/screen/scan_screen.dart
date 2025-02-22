@@ -6,7 +6,6 @@ import 'dart:developer';
 import 'package:blocks_guide/helpers/connection_helper.dart';
 import 'package:blocks_guide/helpers/connection_provider.dart';
 import 'package:blocks_guide/helpers/kiosk_mode_manager.dart';
-import 'package:blocks_guide/provider/background_service.dart';
 import 'package:connect_to_sql_server_directly/connect_to_sql_server_directly.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
@@ -143,11 +142,32 @@ WHERE
     AND (
         (MAM.Is_Limited_Date = '1' AND GETDATE() BETWEEN MAM.Limited_Start_Date AND MAM.Limited_End_Date)
         OR MAM.Is_Limited_Date = '0'
+        OR MAM.Is_Limited_Date IS NULL
     )
     AND (
         (MAM.Is_Time_Restricted = '1' AND GETDATE() BETWEEN MAM.Restricted_Time_Start_Date AND MAM.Restricted_Time_End_Date)
         OR MAM.Is_Time_Restricted = '0'
-    ); """);
+        OR MAM.Is_Time_Restricted IS NULL
+    );
+""");
+//           ("""SELECT
+//     MAM.*
+// FROM
+//     Mix_And_Match MAM
+// JOIN
+//     Mix_And_Match_Products MAMP
+//     ON MAM.Id = MAMP.Mix_And_Match_Id
+// WHERE
+//     MAMP.Product_Id = '$productId'
+//     AND MAM.Is_Active = '1'
+//     AND (
+//         (MAM.Is_Limited_Date = '1' AND GETDATE() BETWEEN MAM.Limited_Start_Date AND MAM.Limited_End_Date)
+//         OR MAM.Is_Limited_Date = '0'
+//     )
+//     AND (
+//         (MAM.Is_Time_Restricted = '1' AND GETDATE() BETWEEN MAM.Restricted_Time_Start_Date AND MAM.Restricted_Time_End_Date)
+//         OR MAM.Is_Time_Restricted = '0'
+//     ); """);
       //     ("""
       // SELECT Mix_And_Match.Id, Mix_And_Match.Discount, Mix_And_Match.Type, Mix_And_Match.Quantity, Mix_And_Match.Is_Limited_Date,
       //        Mix_And_Match.Limited_Start_Date, Mix_And_Match.Limited_End_Date, Mix_And_Match.Is_Time_Restricted,
@@ -163,11 +183,13 @@ WHERE
           // Check if the mix-and-match is valid for today's weekday
           bool isDayValid = row[weekdayCheck] == true || row[weekdayCheck] == 1;
 
+          bool isDateRes = row['Is_Limited_Date'] == true ? true : false;
+
           // Log the weekday check result
           log('Weekday check for $currentDayName: $isDayValid');
 
           // Only proceed if the product is valid for today
-          if (!isDayValid) {
+          if (isDateRes && !isDayValid) {
             log('Mix and Match not valid for today\'s weekday');
             return ''; // Return empty if not valid for today
           }
