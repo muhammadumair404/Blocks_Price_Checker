@@ -65,7 +65,7 @@ class _ScanScreenState extends State<ScanScreen>
   int index = 0;
   Color bottomColor = const Color(0xff092646);
   Color topColor = const Color(0xff410D75);
-  late AnimationController _controller;
+  late AnimationController _animationController;
   late Animation<double> _animation;
   late Timer _timer;
   late AnimationController _scaleController;
@@ -225,16 +225,16 @@ WHERE
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
     // initializeService();
 
-    _controller = AnimationController(
+    _animationController = AnimationController(
       duration: const Duration(milliseconds: 700),
       vsync: this,
     );
 
     _animation = Tween<double>(begin: -10, end: 10).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
-    _controller.repeat(reverse: true);
+    _animationController.repeat(reverse: true);
 
     _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
       setState(() {
@@ -288,7 +288,7 @@ WHERE
     WidgetsBinding.instance.removeObserver(this); // Observer ko remove karein
     _focusNode.dispose();
     controller.dispose();
-    _controller.dispose();
+    _animationController.dispose();
     _scaleController.dispose();
     _colorController.dispose(); // Dispose the controller
     _timer.cancel();
@@ -323,6 +323,7 @@ WHERE
   Future<void> getProductsTableData(String text) async {
     setState(() {
       isLoading = true;
+      // controller.text = '';
       controller.text = text;
     });
     productList.clear();
@@ -424,9 +425,9 @@ WHERE
 
       // Now we fetch any special price that applies
       final specialPriceResponse =
-          await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult("""	SELECT Id, special_price 
+          await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult("""SELECT Id, special_price
 FROM Product
-WHERE 
+WHERE
     (plu_id = '$text' OR Barcode = '$text' OR Id IN (SELECT Product_Id FROM ProductSKUs WHERE SKU = '$text'))
     AND CONVERT(DATE, GETDATE()) BETWEEN CONVERT(DATE, on_special_datetime1) AND CONVERT(DATE, on_special_datetime2)
     AND on_special = 1;
@@ -440,10 +441,13 @@ WHERE
       log('special Price Response:    $specialPriceResponse');
       if (specialPriceResponse is List) {
         for (var product in productList) {
+          print("product $product");
           List<Map<String, dynamic>> tempResult = specialPriceResponse.cast<Map<String, dynamic>>();
           for (var e in tempResult) {
+            print('Temp Result: $tempResult');
             if (product.keycode == e['Id'].toString()) {
               product.specialPrice = double.tryParse(e["special_price"].toString()) ?? 0.0;
+              print('Special Price: ${product.specialPrice}');
             }
           }
         }

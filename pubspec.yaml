@@ -50,7 +50,7 @@ dependencies:
   network_info_plus: ^6.1.0 
   wifi_info_plugin_plus: ^2.0.2
   connectivity_plus: ^4.0.1
-  wifi_info_flutter: ^2.0.2
+  wifi_info_flutter: ^2.0.2 
   
 
 
