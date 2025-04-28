@@ -144,6 +144,11 @@ class KioskModeManager {
   Future<void> showDatabasePopup(BuildContext context) async {
     final connectToSqlServerDirectlyPlugin = ConnectToSqlServerDirectly();
     bool connect = false;
+    String? selectedDatabase = 'POS Geniee';
+    List<String> dropdownItems = [
+      'POS Geniee',
+      'Blocks POS',
+    ];
 
     TextEditingController serverController = TextEditingController();
     TextEditingController databaseController = TextEditingController();
@@ -154,6 +159,7 @@ class KioskModeManager {
 
     // Load saved preferences and display them in the text fields
     final SharedPreferences prefs = await SharedPreferences.getInstance();
+    selectedDatabase = prefs.getString('selectedDatabase') ?? 'POS Geniee';
     serverController.text = prefs.getString('serverIp') ?? '';
     databaseController.text = prefs.getString('database') ?? '';
     usernameController.text = prefs.getString('userName') ?? '';
@@ -271,6 +277,18 @@ class KioskModeManager {
                           ),
                         ),
                         const SizedBox(height: 10),
+                        _buildDropdown(
+                          context,
+                          selectedValue: selectedDatabase,
+                          items: dropdownItems,
+                          onChanged: (newValue) {
+                            setState(() {
+                              selectedDatabase = newValue;
+                            });
+                          },
+                          labelText: 'Choose A Database *', // Label for the dropdown
+                        ),
+                        const SizedBox(height: 10),
                         _buildTextField(context,
                             autofocus: true, controller: serverController, labelText: 'Server *'),
                         const SizedBox(height: 10),
@@ -295,7 +313,9 @@ class KioskModeManager {
                       bool status = await testConnection(context, setState);
                       print('testConnection: $status');
                       Provider.of<ConnectionProvider>(context, listen: false)
-                          .updateConnectionStatus(status);
+                          .updateConnectionStatus(
+                        status,
+                      );
                     },
                   ),
                   TextButton(
@@ -325,8 +345,8 @@ class KioskModeManager {
                     onPressed: connect
                         ? () async {
                             // Save connection data and update settings
-                            await _handleUpdate(context, serverController, databaseController,
-                                usernameController, passwordController);
+                            await _handleUpdate(context, selectedDatabase!, serverController,
+                                databaseController, usernameController, passwordController);
                           }
                         : null, // Disable if not connected
                     child: const Text('Update'),
@@ -532,8 +552,38 @@ class KioskModeManager {
     );
   }
 
+  static Widget _buildDropdown(
+    BuildContext context, {
+    required String? selectedValue,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+    required String labelText,
+  }) {
+    return InputDecorator(
+      decoration: InputDecoration(
+        labelText: labelText,
+        border: const OutlineInputBorder(),
+        contentPadding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          isExpanded: true,
+          value: selectedValue,
+          items: items.map((item) {
+            return DropdownMenuItem(
+              value: item,
+              child: Text(item),
+            );
+          }).toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
   static Future<void> _handleUpdate(
       BuildContext context,
+      String selectedDatabase,
       TextEditingController serverController,
       TextEditingController databaseController,
       TextEditingController usernameController,
@@ -544,6 +594,7 @@ class KioskModeManager {
         usernameController.text.isNotEmpty &&
         passwordController.text.isNotEmpty) {
       // Store connection data
+      prefs.setString('selectedDatabase', selectedDatabase ?? 'POS Geniee');
       prefs.setString('serverIp', serverController.text);
       prefs.setString('database', databaseController.text);
       prefs.setString('userName', usernameController.text);

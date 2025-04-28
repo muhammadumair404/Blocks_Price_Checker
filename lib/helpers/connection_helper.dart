@@ -5,8 +5,6 @@ import 'dart:developer';
 import 'package:blocks_guide/helpers/connection_provider.dart';
 import 'package:connect_to_sql_server_directly/connect_to_sql_server_directly.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ConnectionHelper {
@@ -15,14 +13,15 @@ class ConnectionHelper {
     log('checkInitialConnection started');
     bool isConnected = false;
 
-    if (prefs.containsKey('serverIp') &&
+    if (prefs.containsKey('selectedDatabase') &&
+        prefs.containsKey('serverIp') &&
         prefs.containsKey('database') &&
         prefs.containsKey('userName') &&
         prefs.containsKey('password')) {
-      final serverIp = prefs.getString('serverIp')!;
-      final database = prefs.getString('database')!;
-      final username = prefs.getString('userName')!;
-      final password = prefs.getString('password')!;
+      // final serverIp = prefs.getString('serverIp')!;
+      // final database = prefs.getString('database')!;
+      // final username = prefs.getString('userName')!;
+      // final password = prefs.getString('password')!;
 
       try {
         final connectToSqlServerDirectlyPlugin = ConnectToSqlServerDirectly();

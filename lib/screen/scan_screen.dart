@@ -72,7 +72,11 @@ class _ScanScreenState extends State<ScanScreen>
   late Animation<double> _scaleAnimation;
   late AnimationController _colorController;
   late Animation<Color?> _colorAnimation;
+  late SharedPreferences prefs;
   Timer? _clearProductTimer; // Timer for clearing the product
+  void initPref() async {
+    prefs = await SharedPreferences.getInstance();
+  }
 
   // Lifecycle changes ko handle karna
   @override
@@ -219,6 +223,7 @@ WHERE
   void initState() {
     super.initState();
     fetchData();
+    initPref();
   }
 
   fetchData() async {
@@ -400,6 +405,7 @@ WHERE
 
       // Query to get the basic product data based on barcode or plu_id
       final productResponse = await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
+
           // """SELECT Id, Barcode, product_name, retail_price, product_type, tax, ebt_eligible_checkbox, weight_item_checkbox, loyality_point FROM Product WHERE plu_id =  '$text' OR Barcode =  '$text' ;""",
           """SELECT Id, Barcode, product_name, retail_price, product_type, tax, ebt_eligible_checkbox, weight_item_checkbox, loyality_point FROM Product WHERE Id In(select Product_Id from ProductSKUs where SKU = '$text') or Barcode = '$text' or plu_id = '$text';""");
       log('Text:?? $text');
@@ -562,6 +568,7 @@ WHERE
 
   @override
   Widget build(BuildContext context) {
+    log('Selected Database: ${prefs.getString('selectedDatabase')}');
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
@@ -593,6 +600,7 @@ WHERE
             Consumer<ConnectionProvider>(
               builder: (context, value, child) {
                 bool connection = value.isConnected;
+
                 print('ConnectionProvider Connection: $connection');
                 return IconButton(
                   icon: Icon(
