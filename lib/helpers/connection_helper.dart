@@ -27,7 +27,7 @@ class ConnectionHelper {
       try {
         final connectToSqlServerDirectlyPlugin = ConnectToSqlServerDirectly();
         final response = await connectToSqlServerDirectlyPlugin
-            .getRowsOfQueryResult("SELECT TOP 1 * FROM Product;");
+            .getRowsOfQueryResult("SELECT TOP 1 * FROM Products;");
         isConnected = !response.toString().contains('java');
 
         log('Database connection initialized: $isConnected');

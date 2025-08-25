@@ -44,8 +44,7 @@ class ProductModel {
       'ProductModel{keycode: $keycode, sku: $sku, name: $name, retailPrice: $retailPrice, specialPrice: $specialPrice, mixAndMatch: $mixAndMatch}';
 }
 
-class _ScanScreenState extends State<ScanScreen>
-    with TickerProviderStateMixin, WidgetsBindingObserver {
+class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin, WidgetsBindingObserver {
   final MethodChannel platform = const MethodChannel('com.eratech.blocks_price_check/kiosk_mode');
   List<ProductModel> productList = [];
   bool isLoading = false;
@@ -74,30 +73,32 @@ class _ScanScreenState extends State<ScanScreen>
   late Animation<Color?> _colorAnimation;
   Timer? _clearProductTimer; // Timer for clearing the product
 
-  // Lifecycle changes ko handle karna
+  /// Handle app lifecycle changes
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Jab app resume ho (minimize se wapas aaye) to kiosk mode start karein
+      // Start kiosk mode when app resumes from minimize
       _launchAppOnBoot();
     }
   }
 
-  // Kiosk mode start karne ka method
+  /// Start kiosk mode
   Future<void> _launchAppOnBoot() async {
     await KioskModeManager.startKioskMode();
     try {
       var result = await platform.invokeMethod('startKioskMode');
       log(result.toString());
     } on PlatformException catch (e) {
-      print("Failed to invoke method: '${e.message}'.");
+      log("Failed to invoke kiosk mode: '${e.message}'.");
     }
   }
 
+  /// Check if current date is within date range
   bool isWithinDateRange(DateTime startDate, DateTime endDate, DateTime currentDate) {
     return startDate.isBefore(currentDate) && endDate.isAfter(currentDate);
   }
 
+  /// Check if current time is within time range
   bool isWithinTimeRange(String startTime, String endTime, DateTime currentTime) {
     final format = DateFormat.Hms();
     final start = format.parse(startTime);
@@ -110,17 +111,8 @@ class _ScanScreenState extends State<ScanScreen>
     final today = DateTime.now();
 
     // Get the current weekday as a name (Monday, Tuesday, etc.)
-    List<String> weekdays = [
-      'Sunday',
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday'
-    ];
-    String currentDayName =
-        weekdays[today.weekday % 7]; // Weekday starts from 1 (Monday), so adjust for Sunday.
+    List<String> weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    String currentDayName = weekdays[today.weekday % 7]; // Weekday starts from 1 (Monday), so adjust for Sunday.
     String weekdayCheck = "${currentDayName}_Check"; // e.g., "[Monday_Check]"
 
     log('Crurrent Day :>>> $weekdayCheck');
@@ -129,28 +121,18 @@ class _ScanScreenState extends State<ScanScreen>
       log('Before query execution');
 
       // Query to get mix and match details for the product
-      final response = await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult("""SELECT
-    MAM.*
-FROM
-    Mix_And_Match MAM
-JOIN
-    Mix_And_Match_Products MAMP
-    ON MAM.Id = MAMP.Mix_And_Match_Id
-WHERE
-    MAMP.Product_Id = '$productId'
-    AND MAM.Is_Active = '1'
-    AND (
-        (MAM.Is_Limited_Date = '1' AND GETDATE() BETWEEN MAM.Limited_Start_Date AND MAM.Limited_End_Date)
-        OR MAM.Is_Limited_Date = '0'
-        OR MAM.Is_Limited_Date IS NULL
-    )
-    AND (
-        (MAM.Is_Time_Restricted = '1' AND GETDATE() BETWEEN MAM.Restricted_Time_Start_Date AND MAM.Restricted_Time_End_Date)
-        OR MAM.Is_Time_Restricted = '0'
-        OR MAM.Is_Time_Restricted IS NULL
-    );
-""");
-//           ("""SELECT
+      final response = await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult("""
+        SELECT MAM.Name 
+        FROM MixMatch MAM
+        INNER JOIN MixMatchProduct MAMP ON MAM.keycode = MAMP.MixMatchkeycode
+        WHERE MAMP.Productkeycode = '$productId' 
+          AND MAM.IsActiveRecord = '1'
+          AND ((MAM.IsLimitedDates = '1' AND GETDATE() BETWEEN MAM.StartDate AND MAM.EndDate) OR MAM.IsLimitedDates = '0')
+          AND ((MAM.IsTimeRestricted = '1' AND GETDATE() BETWEEN MAM.StartTime AND MAM.EndTime) OR MAM.IsTimeRestricted = '0');
+      """);
+
+/*
+// SELECT
 //     MAM.*
 // FROM
 //     Mix_And_Match MAM
@@ -163,20 +145,15 @@ WHERE
 //     AND (
 //         (MAM.Is_Limited_Date = '1' AND GETDATE() BETWEEN MAM.Limited_Start_Date AND MAM.Limited_End_Date)
 //         OR MAM.Is_Limited_Date = '0'
+//         OR MAM.Is_Limited_Date IS NULL
 //     )
 //     AND (
 //         (MAM.Is_Time_Restricted = '1' AND GETDATE() BETWEEN MAM.Restricted_Time_Start_Date AND MAM.Restricted_Time_End_Date)
 //         OR MAM.Is_Time_Restricted = '0'
-//     ); """);
-      //     ("""
-      // SELECT Mix_And_Match.Id, Mix_And_Match.Discount, Mix_And_Match.Type, Mix_And_Match.Quantity, Mix_And_Match.Is_Limited_Date,
-      //        Mix_And_Match.Limited_Start_Date, Mix_And_Match.Limited_End_Date, Mix_And_Match.Is_Time_Restricted,
-      //        Mix_And_Match.Restricted_Time_Start_Date, Mix_And_Match.Restricted_Time_End_Date, $weekdayCheck
-      // FROM Mix_And_Match, Mix_And_Match_Products
-      // WHERE Mix_And_Match.Id = Mix_And_Match_Products.Mix_And_Match_Id
-      // AND Mix_And_Match_Products.Product_Id = '$productId'
-      // AND Mix_And_Match.Is_Active = '1';
-      // """);
+//         OR MAM.Is_Time_Restricted IS NULL
+//     );
+*/
+
       log('getMixAndMatchData response >>> $response');
       if (response != null && response is List && response.isNotEmpty) {
         for (var row in response) {
@@ -194,14 +171,12 @@ WHERE
             return ''; // Return empty if not valid for today
           }
           setState(() {
-            mixMatchText = '';
             mixMatchText = row['Name'];
           });
-          //
+
           data.clear();
           data.add(row);
-          log('data:   >>>  $data >>> rowName : ${row['Name']}');
-          // log('data mix and match : ${row['Name']}');
+          log('Mix and match data: $data >>> Name: ${row['Name']}');
         }
       } else {
         setState(() {
@@ -221,9 +196,9 @@ WHERE
     fetchData();
   }
 
+  /// Initialize app data and animations
   fetchData() async {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
-    // initializeService();
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 700),
@@ -269,15 +244,14 @@ WHERE
       end: Colors.red,
     ).animate(_colorController);
 
+    // Check database connection every minute
     _timer = Timer.periodic(const Duration(minutes: 1), (timer) async {
       final connectionProvider = Provider.of<ConnectionProvider>(context, listen: false);
-      // Check status every 1 min
       ConnectionProvider().loadConnectionStatus();
       await ConnectionHelper().checkInitialConnection(connectionProvider);
     });
-    // KioskModeManager().realTimeTestConnection();
-    WidgetsBinding.instance.addObserver(this); // Lifecycle observer add karein
-    // _launchAppOnBoot(); // App start hone pe kiosk mode automatically start ho
+
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusScope.of(context).requestFocus(_focusNode);
     });
@@ -285,31 +259,29 @@ WHERE
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this); // Observer ko remove karein
+    WidgetsBinding.instance.removeObserver(this);
     _focusNode.dispose();
     controller.dispose();
     _animationController.dispose();
     _scaleController.dispose();
-    _colorController.dispose(); // Dispose the controller
+    _colorController.dispose();
     _timer.cancel();
-    _clearProductTimer?.cancel(); // Cancel the timer when the screen is disposed
+    _clearProductTimer?.cancel();
     super.dispose();
   }
 
+  /// Start timer to automatically clear product data after 15 seconds
   void _startClearProductTimer() {
-    // Cancel any existing timer before starting a new one
     _clearProductTimer?.cancel();
 
     _clearProductTimer = Timer(const Duration(seconds: 15), () {
       setState(() {
-        productList.clear(); // Clear the product list
-        imageUrl = ''; // Clear the image URL
+        productList.clear();
+        imageUrl = '';
       });
 
-      // Show a message or simply rely on the UI update
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          // Check if the widget is still in the tree
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Product data cleared.'),
@@ -327,8 +299,8 @@ WHERE
       controller.text = text;
     });
     productList.clear();
-    log('Product list >>::>> ${productList.isEmpty}');
-    log('TextField Text >>::>> $text');
+    log('Product list empty: ${productList.isEmpty}');
+    log('Scanned text: $text');
 
     // Check if there is internet connectivity
     var connectivityResult = await (Connectivity().checkConnectivity());
@@ -350,8 +322,7 @@ WHERE
           prefs.getString('database') != null &&
           prefs.getString('userName') != null &&
           prefs.getString('password') != null) {
-        final tables = await _connectToSqlServerDirectlyPlugin
-            .getRowsOfQueryResult('SELECT * FROM INFORMATION_SCHEMA.TABLES');
+        final tables = await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult('SELECT * FROM INFORMATION_SCHEMA.TABLES');
 
         log('Tables>>> $tables');
 
@@ -398,13 +369,14 @@ WHERE
       final today = DateTime.now();
       log('Today Date: $today');
 
-      // Query to get the basic product data based on barcode or plu_id
-      final productResponse = await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
-          // """SELECT Id, Barcode, product_name, retail_price, product_type, tax, ebt_eligible_checkbox, weight_item_checkbox, loyality_point FROM Product WHERE plu_id =  '$text' OR Barcode =  '$text' ;""",
-          """SELECT Id, Barcode, product_name, retail_price, product_type, tax, ebt_eligible_checkbox, weight_item_checkbox, loyality_point FROM Product WHERE Id In(select Product_Id from ProductSKUs where SKU = '$text') or Barcode = '$text' or plu_id = '$text';""");
-      log('Text:?? $text');
-
-      log('product Response>>>>: $productResponse');
+      // Query to get basic product data
+      final productResponse = await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult("""
+        SELECT keycode, ProductName, RetailPrice, ProductNature, TaxNonTax, EBTEligible, WeightItem, LoyaltyPoint 
+        FROM Products 
+        WHERE keycode IN (SELECT Productkeycode FROM ProductSKUs WHERE ProductSKU = '$text');
+        """);
+      log('Query text: $text');
+      log('Product response: $productResponse');
 
       if (productResponse.runtimeType == String) {
         showBottomSnackBar(productResponse.toString());
@@ -424,14 +396,19 @@ WHERE
       }
 
       // Now we fetch any special price that applies
-      final specialPriceResponse =
-          await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult("""SELECT Id, special_price
-FROM Product
+      final specialPriceResponse = await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult("""
+SELECT keycode, SpecialPrice FROM Products WHERE keycode = '$text'
+AND CONVERT(DATE, GETDATE()) BETWEEN CONVERT(DATE, StartDate) AND CONVERT(DATE, EndDate)    AND OnSpecial = 1;
+""");
+
+/** 
+ * SELECT Id, special_price
+FROM Products
 WHERE
     (plu_id = '$text' OR Barcode = '$text' OR Id IN (SELECT Product_Id FROM ProductSKUs WHERE SKU = '$text'))
     AND CONVERT(DATE, GETDATE()) BETWEEN CONVERT(DATE, on_special_datetime1) AND CONVERT(DATE, on_special_datetime2)
     AND on_special = 1;
-""");
+*/
 
       // ("""SELECT Id, special_price
       // FROM Product
@@ -453,30 +430,13 @@ WHERE
         }
       }
 
-      // // If no product was found, check using SKU
-      // if (productList.isEmpty) {
-      //   final skuResponse = await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
-      //     "SELECT Product.Id, product_name, retail_price, product_type, tax, ebt_eligible_checkbox, weight_item_checkbox, loyality_point FROM Product, ProductSKUs WHERE ProductSKUs.SKU = '$text' AND Product.Id = ProductSKUs.Product_Id",
-      //   );
-      //   log('SKU Response:    $skuResponse');
-      //   if (skuResponse.runtimeType == String) {
-      //     showBottomSnackBar(skuResponse.toString());
-      //   } else {
-      //     List<Map<String, dynamic>> tempResult = skuResponse.cast<Map<String, dynamic>>();
-      //     for (var element in tempResult) {
-      //       _addProduct(element);
-      //       print('Element :>>> $element');
-      //     }
-      //   }
-      // }
-
       // Check if no product was found in both cases
       if (productList.isEmpty) {
         showBottomSnackBar('No product found');
       } else {
         // Fetch product image if found
         final imageResponse = await _connectToSqlServerDirectlyPlugin.getRowsOfQueryResult(
-          "SELECT image_url FROM Product WHERE Barcode = '$text'",
+          "SELECT image_url FROM Products WHERE ProductSKU = '$text'",
         );
         log('Image Response:    $imageResponse');
 
@@ -499,17 +459,17 @@ WHERE
     });
   }
 
+  /// Add product to the display list
   void _addProduct(Map<String, dynamic> element, {String mixMatch = ''}) {
-    final keycode = element['Id']?.toString() ?? '';
-    final sku = element['Barcode']?.toString() ?? '';
-    final name = element['product_name'] ?? 'Unknown Product';
-    final retailPrice = double.tryParse(element['retail_price']?.toString() ?? '0.0') ?? 0.0;
-    final specialPrice = double.tryParse(element['special_price']?.toString() ?? '0.0') ?? 0.0;
+    final keycode = element['keycode']?.toString() ?? '';
+    final sku = element['ProductSKU']?.toString() ?? '';
+    final name = element['ProductName'] ?? 'Unknown Product';
+    final retailPrice = double.tryParse(element['RetailPrice']?.toString() ?? '0.0') ?? 0.0;
+    final specialPrice = double.tryParse(element['SpecialPrice']?.toString() ?? '0.0') ?? 0.0;
 
-    log('Product list : ${productList.isEmpty}');
+    log('Adding product to list (current empty: ${productList.isEmpty})');
 
-    if (keycode.isNotEmpty || sku.isNotEmpty) {
-      // Ensure the essential data is present
+    if (keycode.isNotEmpty) {
       productList.add(
         ProductModel(
           keycode: keycode,
@@ -593,7 +553,7 @@ WHERE
             Consumer<ConnectionProvider>(
               builder: (context, value, child) {
                 bool connection = value.isConnected;
-                print('ConnectionProvider Connection: $connection');
+                // Connection status is managed by ConnectionProvider
                 return IconButton(
                   icon: Icon(
                     Icons.settings,
@@ -711,10 +671,7 @@ WHERE
                                           ),
                                         ),
                                       ),
-                                      Container(
-                                          height: 350.h,
-                                          width: 1.w,
-                                          color: Colors.grey.withOpacity(0.5)),
+                                      Container(height: 350.h, width: 1.w, color: Colors.grey.withOpacity(0.5)),
                                       Expanded(
                                         child: SingleChildScrollView(
                                           child: Column(
@@ -726,9 +683,7 @@ WHERE
                                                 children: [
                                                   Container(
                                                     width: 160.w,
-                                                    decoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        borderRadius: BorderRadius.circular(30.r)),
+                                                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30.r)),
                                                     child: Column(
                                                       crossAxisAlignment: CrossAxisAlignment.center,
                                                       mainAxisAlignment: MainAxisAlignment.center,
@@ -742,8 +697,7 @@ WHERE
                                                           ),
                                                         ),
                                                         Padding(
-                                                          padding: const EdgeInsets.symmetric(
-                                                              horizontal: 8.0),
+                                                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                                           child: Row(
                                                             children: [
                                                               Expanded(
@@ -769,8 +723,7 @@ WHERE
                                                                 flex: 2,
                                                                 child: FittedBox(
                                                                   child: Text(
-                                                                    item.retailPrice
-                                                                        .toStringAsFixed(2),
+                                                                    item.retailPrice.toStringAsFixed(2),
                                                                     style: TextStyle(
                                                                       fontSize: 25.sp,
                                                                       fontWeight: FontWeight.bold,
@@ -788,8 +741,7 @@ WHERE
                                                               animation: _scaleAnimation,
                                                               builder: (context, child) {
                                                                 return Transform.scale(
-                                                                  scale: _scaleAnimation
-                                                                      .value, // Apply zoom animation
+                                                                  scale: _scaleAnimation.value, // Apply zoom animation
                                                                   child: AnimatedBuilder(
                                                                     animation: _colorAnimation,
                                                                     builder: (context, child) {
@@ -797,10 +749,8 @@ WHERE
                                                                         item.mixAndMatch!,
                                                                         style: TextStyle(
                                                                           fontSize: 20.sp,
-                                                                          fontWeight:
-                                                                              FontWeight.bold,
-                                                                          color: _colorAnimation
-                                                                              .value, // Apply color animation
+                                                                          fontWeight: FontWeight.bold,
+                                                                          color: _colorAnimation.value, // Apply color animation
                                                                         ),
                                                                       );
                                                                     },
@@ -809,19 +759,16 @@ WHERE
                                                               },
                                                             ),
                                                           ),
-                                                        if (item.specialPrice != null &&
-                                                            item.specialPrice != 0.00) ...[
+                                                        if (item.specialPrice != null && item.specialPrice != 0.00) ...[
                                                           Padding(
-                                                            padding: const EdgeInsets.symmetric(
-                                                                horizontal: 15.0),
+                                                            padding: const EdgeInsets.symmetric(horizontal: 15.0),
                                                             child: Container(
                                                               height: 1.h,
                                                               color: Colors.grey,
                                                             ),
                                                           ),
                                                           Padding(
-                                                            padding: const EdgeInsets.symmetric(
-                                                                horizontal: 45.0),
+                                                            padding: const EdgeInsets.symmetric(horizontal: 45.0),
                                                             child: Row(
                                                               children: [
                                                                 Expanded(
@@ -850,23 +797,15 @@ WHERE
                                                                       animation: _scaleAnimation,
                                                                       builder: (context, child) {
                                                                         return Transform.scale(
-                                                                          scale: _scaleAnimation
-                                                                              .value, // Apply zoom animation
+                                                                          scale: _scaleAnimation.value, // Apply zoom animation
                                                                           child: AnimatedBuilder(
-                                                                            animation:
-                                                                                _colorAnimation,
-                                                                            builder:
-                                                                                (context, child) {
+                                                                            animation: _colorAnimation,
+                                                                            builder: (context, child) {
                                                                               return Text(
-                                                                                item.specialPrice!
-                                                                                    .toStringAsFixed(
-                                                                                        2),
+                                                                                item.specialPrice!.toStringAsFixed(2),
                                                                                 style: TextStyle(
-                                                                                  fontWeight:
-                                                                                      FontWeight
-                                                                                          .bold,
-                                                                                  color: _colorAnimation
-                                                                                      .value, // Apply color animation
+                                                                                  fontWeight: FontWeight.bold,
+                                                                                  color: _colorAnimation.value, // Apply color animation
                                                                                 ),
                                                                               );
                                                                             },
@@ -893,16 +832,11 @@ WHERE
                                   )
                                 : Consumer<ConnectionProvider>(
                                     builder: (context, value, child) {
-                                      bool connection =
-                                          value.isConnected; // Provider se value access ki.
+                                      bool connection = value.isConnected; // Provider se value access ki.
                                       return Center(
                                         child: Text(
-                                          connection
-                                              ? 'Please Scan Your Product'
-                                              : 'Please connect to your server',
-                                          style: connection
-                                              ? TextStyle(fontSize: 15.sp)
-                                              : TextStyle(color: Colors.red, fontSize: 15.sp),
+                                          connection ? 'Please Scan Your Product' : 'Please connect to your server',
+                                          style: connection ? TextStyle(fontSize: 15.sp) : TextStyle(color: Colors.red, fontSize: 15.sp),
                                         ),
                                       );
                                     },

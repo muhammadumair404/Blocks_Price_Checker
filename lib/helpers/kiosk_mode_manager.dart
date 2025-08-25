@@ -40,24 +40,6 @@ class KioskModeManager {
     }
   }
 
-  // // Call this to start Kiosk Mode
-  // static Future<void> startKioskMode() async {
-  //   try {
-  //     await platform.invokeMethod('startKioskMode');
-  //   } on PlatformException catch (e) {
-  //     print("Failed to start Kiosk Mode: '${e.message}'.");
-  //   }
-  // }
-
-  // // Call this to stop Kiosk Mode
-  // static Future<void> stopKioskMode() async {
-  //   try {
-  //     await platform.invokeMethod('stopKioskMode');
-  //   } on PlatformException catch (e) {
-  //     print("Failed to stop Kiosk Mode: '${e.message}'.");
-  //   }
-  // }
-
   // Show password dialog and handle Kiosk Mode exit
   Future<void> showPasswordDialog(BuildContext context) async {
     TextEditingController passwordController = TextEditingController();
@@ -164,6 +146,11 @@ class KioskModeManager {
       bool isConnected = false; // Variable to hold connection status
 
       try {
+        log('Attempting connection with:');
+        log('Server: ${serverController.text}');
+        log('Database: ${databaseController.text}');
+        log('Username: ${usernameController.text}');
+        
         connect = await connectToSqlServerDirectlyPlugin.initializeConnection(
           serverController.text,
           databaseController.text,
@@ -171,21 +158,30 @@ class KioskModeManager {
           passwordController.text,
           instance: '',
         );
+        log('Initial connection result: $connect');
       } catch (e) {
-        print('Failed to connect to the database: $e');
+        log('Failed to connect to the database: $e');
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Please Check Your Credentials'),
+            SnackBar(
+              content: Text('Connection Error: ${e.toString()}'),
               backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
             ),
           );
         }
         return false; // Return false if connection fails
       }
 
+      // First try to list all tables to see what's available
+      var tablesResponse = await connectToSqlServerDirectlyPlugin
+          .getRowsOfQueryResult("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'");
+      log('Available tables: $tablesResponse');
+      
+      // Try the Product table query
       final response = await connectToSqlServerDirectlyPlugin
-          .getRowsOfQueryResult("SELECT TOP 1 * FROM Product;");
+          .getRowsOfQueryResult("SELECT TOP 1 * FROM Products;");
+      log('Product query response: $response');
       isConnected = !response.toString().contains('java');
 
       if (context.mounted) {
@@ -339,181 +335,6 @@ class KioskModeManager {
       },
     );
   }
-
-  // Future<bool> realTimeTestConnection() async {
-  //   // Instantiate the plugin
-  //   final connectToSqlServerDirectlyPlugin = ConnectToSqlServerDirectly();
-
-  //   // Initialize the connection status
-  //   bool connect = false;
-
-  //   // Create text editing controllers
-  //   final TextEditingController serverController = TextEditingController();
-  //   final TextEditingController databaseController = TextEditingController();
-  //   final TextEditingController usernameController = TextEditingController();
-  //   final TextEditingController passwordController = TextEditingController();
-
-  //   // Load saved preferences
-  //   final SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   serverController.text = prefs.getString('serverIp') ?? '';
-  //   databaseController.text = prefs.getString('database') ?? '';
-  //   usernameController.text = prefs.getString('userName') ?? '';
-  //   passwordController.text = prefs.getString('password') ?? '';
-
-  //   try {
-  //     // Initialize connection using the plugin
-  //     connect = await connectToSqlServerDirectlyPlugin.initializeConnection(
-  //       serverController.text,
-  //       databaseController.text,
-  //       usernameController.text,
-  //       passwordController.text,
-  //       instance: '',
-  //     );
-
-  //     if (connect) {
-  //       // Run a query to verify the connection
-  //       final response = await connectToSqlServerDirectlyPlugin
-  //           .getRowsOfQueryResult("SELECT TOP 1 * FROM Product;");
-
-  //       // Check the response validity
-  //       connect = !response.toString().contains('java');
-  //     }
-
-  //     // Log connection status
-  //     if (connect) {
-  //       log('Successfully connected to the server');
-  //     } else {
-  //       log('Failed to connect to the server');
-  //     }
-  //   } catch (e) {
-  //     // Handle exceptions
-  //     connect = false;
-  //     log('Failed to connect to the database: $e');
-  //     log('Please check your credentials');
-  //   } finally {
-  //     // Dispose of the text editing controllers
-  //     serverController.dispose();
-  //     databaseController.dispose();
-  //     usernameController.dispose();
-  //     passwordController.dispose();
-  //   }
-
-  //   return connect;
-  // }
-  // connectivity(BuildContext context) {
-  //   Connectivity().onConnectivityChanged.listen((ConnectivityResult result) async {
-  //     bool connectivity = await ConnectionHelper().checkConnectivity();
-  //     log('connectivity $connectivity');
-  //     // Got a new connectivity status!
-  //     if (connectivity) {
-  //       Future.delayed(const Duration(milliseconds: 200)).then((value) {
-  //         Provider.of<ConnectionProvider>(context, listen: false)
-  //             .updateConnectionStatus(true, context);
-  //       });
-  //     } else {
-  //       Future.delayed(const Duration(milliseconds: 200)).then((value) {
-  //         Provider.of<ConnectionProvider>(context, listen: false)
-  //             .updateConnectionStatus(false, context);
-  //       });
-  //     }
-  //   });
-  // }
-
-  // Future<void> debugNetworkInterfaces() async {
-  //   try {
-  //     final interfaces = await NetworkInterface.list();
-  //     for (var interface in interfaces) {
-  //       print('Interface: ${interface.name}');
-  //       for (var addr in interface.addresses) {
-  //         print('  Address: ${addr.address}, Type: ${addr.type}');
-  //       }
-  //     }
-  //   } catch (e) {
-  //     print('Error fetching interfaces: $e');
-  //   }
-  // }
-
-  // Future<String> getDeviceIPAddress() async {
-  //   final info = NetworkInfo();
-  //   try {
-  //     final wifiIP = await info.getWifiIP(); // Get device IP when connected to WiFi
-  //     print('Device IP Address: $wifiIP');
-  //     return wifiIP ?? '';
-  //   } catch (e) {
-  //     log('Error fetching device IP address: $e');
-  //     return '';
-  //   }
-  // }
-
-  // Future<bool> realTimeTestConnection() async {
-  //   // Instantiate the plugin
-  //   final connectToSqlServerDirectlyPlugin = ConnectToSqlServerDirectly();
-
-  //   // Initialize the connection status
-  //   bool connect = false;
-
-  //   // Create text editing controllers
-  //   final TextEditingController serverController = TextEditingController();
-  //   final TextEditingController databaseController = TextEditingController();
-  //   final TextEditingController usernameController = TextEditingController();
-  //   final TextEditingController passwordController = TextEditingController();
-
-  //   // Load saved preferences
-  //   final SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   serverController.text = prefs.getString('serverIp') ?? '';
-  //   databaseController.text = prefs.getString('database') ?? '';
-  //   usernameController.text = prefs.getString('userName') ?? '';
-  //   passwordController.text = prefs.getString('password') ?? '';
-
-  //   // Fetch the device's current IP address
-  //   final String currentDeviceIP = await getDeviceIPAddress();
-  //   print('Current device IP Address: $currentDeviceIP');
-  //   log('match ${serverController.text} currentDeviceIP $currentDeviceIP');
-  //   if (serverController.text != currentDeviceIP) {
-  //     log('Given IP does not match the device IP. Connection will remain false.');
-  //     return false;
-  //   }
-
-  //   try {
-  //     // Initialize connection using the plugin
-  //     connect = await connectToSqlServerDirectlyPlugin.initializeConnection(
-  //       serverController.text,
-  //       databaseController.text,
-  //       usernameController.text,
-  //       passwordController.text,
-  //       instance: '',
-  //     );
-  //     log('connectToSqlServerDirectlyPlugin $connect');
-  //     if (connect) {
-  //       // Run a query to verify the connection
-  //       final response = await connectToSqlServerDirectlyPlugin
-  //           .getRowsOfQueryResult("SELECT TOP 1 * FROM Product;");
-  //       log('response ${connect.toString()}');
-  //       // Check the response validity
-  //       connect = !response.toString().contains('java');
-  //     }
-
-  //     // Log connection status
-  //     if (connect) {
-  //       log('Successfully connected to the server');
-  //     } else {
-  //       log('Failed to connect to the server');
-  //     }
-  //   } catch (e) {
-  //     // Handle exceptions
-  //     connect = false;
-  //     log('Failed to connect to the database: $e');
-  //     log('Please check your credentials');
-  //   } finally {
-  //     // Dispose of the text editing controllers
-  //     serverController.dispose();
-  //     databaseController.dispose();
-  //     usernameController.dispose();
-  //     passwordController.dispose();
-  //   }
-
-  //   return connect;
-  // }
 
   static Widget _buildTextField(BuildContext context,
       {required TextEditingController controller,

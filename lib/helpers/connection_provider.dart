@@ -9,11 +9,12 @@ class ConnectionProvider with ChangeNotifier {
 
   // Update the connection status and notify listeners
   Future<void> updateConnectionStatus(bool status) async {
-    await _storeConnection(status);
-    log('updateConnectionStatus - status: $status');
-    _isConnected = status;
-    log('Updated connection status to: $_isConnected');
-    notifyListeners();
+    if (_isConnected != status) {
+      await _storeConnection(status);
+      log('Connection status changed: $_isConnected -> $status');
+      _isConnected = status;
+      notifyListeners();
+    }
   }
 
   // Store the connection status in SharedPreferences
